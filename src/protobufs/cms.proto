@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package notadd_module_cms;
+
+message PlaceholderRequest { }
+
+message StringDataResponse {
+    int32 code = 1;
+    string message = 2;
+    string data = 3;
+}
+
+service CmsService {
+    rpc AddClassify (CreateClassifyRequest) returns (StringDataResponse) { }
+    rpc DelClassify (DelClassifyRequest) returns (StringDataResponse) { }
+    rpc UpdateClassify (UpdateClassifyRequest) returns (StringDataResponse) { }
+    rpc GetAllClassify (FindAllClassifyRequest) returns (FindAllClassifyResponse) { }
+    rpc GetOneClassify (FindAllClassifyRequest) returns (FindOneClassifyResponse) { }
+    rpc GetParentClassify (FindAllClassifyRequest) returns (FindAllClassifyResponse) { }
+    rpc MobileArticles (MobileArticlesRequest) return (StringDataResponse) { }
+}
+
+message CreateClassifyRequest {
+    string name = 1;
+    UpdateClassify parent = 2;
+}
+
+message UpdateClassify {
+    int32 id = 1;
+    string name = 2;
+    string chainUrl = 3;
+    UpdateClassify parent = 4;
+}
+
+message CmsResponse {
+    int32 code = 1;
+    string message = 2;
+}
+
+message DelClassifyRequest {
+    int32 id = 1;
+}
+
+message UpdateClassifyRequest {
+    int32 id = 1;
+    string name = 2;
+    UpdateClassify parent = 3;
+}
+
+message FindAllClassifyRequest {
+    int32 id = 1;
+}
+
+message FindAllClassifyResponse {
+    int32 code = 1;
+    string message = 2;
+    string data = 3;
+}
+
+message FindOneClassifyResponse {
+    int32 code = 1;
+    string message = 2;
+    ClassifyData data = 3; 
+}
+
+message ClassifyData {
+    int32 id = 1;
+    string name = 2;
+    repeated CLassifyData children = 3;
+    ClassifyData parent = 4;
+}
+
+message MobileArticlesRequest {
+    int32 classifyId = 1;
+    int32 newClassifyId = 2;
+}
+
+service MessageService {
+    rpc CreateMessage(CreateMessageRequest) returns (StringDataResponse) { }
+}
+
+message CreateMessageRequest {
+    int32 id = 1;
+    string content = 2;
+    int32 owner = 3;
+}
