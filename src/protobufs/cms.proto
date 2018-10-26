@@ -10,14 +10,14 @@ message StringDataResponse {
     string data = 3;
 }
 
-service CmsService {
+service ClassifyService {
     rpc AddClassify (CreateClassifyRequest) returns (StringDataResponse) { }
     rpc DelClassify (DelClassifyRequest) returns (StringDataResponse) { }
     rpc UpdateClassify (UpdateClassifyRequest) returns (StringDataResponse) { }
     rpc GetAllClassify (FindAllClassifyRequest) returns (FindAllClassifyResponse) { }
     rpc GetOneClassify (FindAllClassifyRequest) returns (FindOneClassifyResponse) { }
     rpc GetParentClassify (FindAllClassifyRequest) returns (FindAllClassifyResponse) { }
-    rpc MobileArticles (MobileArticlesRequest) return (StringDataResponse) { }
+    rpc MobileArticles (MobileArticlesRequest) returns (StringDataResponse) { }
 }
 
 message CreateClassifyRequest {
@@ -66,7 +66,7 @@ message FindOneClassifyResponse {
 message ClassifyData {
     int32 id = 1;
     string name = 2;
-    repeated CLassifyData children = 3;
+    repeated ClassifyData children = 3;
     ClassifyData parent = 4;
 }
 
@@ -77,10 +77,151 @@ message MobileArticlesRequest {
 
 service MessageService {
     rpc CreateMessage(CreateMessageRequest) returns (StringDataResponse) { }
+    rpc DeleteMessageById(DeleteMessageByIdRequest) returns (StringDataResponse) { }
+    rpc GetAllMessage(GetAllMessageRequest) returns (GetAllMessageResponse) { }
+    rpc GetMessageByUserId(DeleteMessageByIdRequest) returns (GetAllMessageResponse) { }
 }
 
 message CreateMessageRequest {
+    string content = 1;
+    int32 owner = 2;
+}
+
+message DeleteMessageByIdRequest {
+    int32 pageNumber = 1;
+    int32 pageSize = 2;
+    string startTime = 3;
+    string endTime = 4;
+    int32 id = 5;
+}
+
+message GetAllMessageRequest {
+    int32 pageNumber = 1;
+    int32 pageSize = 2;
+    string startTime = 3;
+    string endTime = 4;
+}
+
+message GetAllMessageResponse {
+    int32 code = 1;
+    string message = 2;
+    repeated Mes data = 3;
+    int32 total = 4;
+}
+
+message Mes {
     int32 id = 1;
     string content = 2;
-    int32 owner = 3;
+    string createAt = 3;
+    int32 owner = 4;
+}
+
+service ArticleService {
+    rpc CreateArticle(CreateArticleRequest) returns (StringDataResponse) { }
+    rpc UpdateArticle(UpdateArticleRequest) returns (StringDataResponse) { }
+    rpc RecycleArticleByIds(RecycleArticleRequest) returns (StringDataResponse) { }
+    rpc DeleteArticleByIds(DeleteArticleRequest) returns (StringDataResponse) { }
+    rpc RecoverArticleByIds(RecoverArticleRequest) returns (StringDataResponse) { }
+    rpc AuditArticle(AuditArticleRequest) returns (StringDataResponse) { }
+    rpc GetAllArticle(GetAllArticleRequest) returns (AllArticleResponse) { }
+    rpc GetRecycleArticle(GetRecycleArticleRequest) returns (AllArticleResponse) { }
+    rpc GetArticleById(GetArticleByIdRequest) returns (ArticleResponse) { }
+    rpc GetCheckArticle(GetCheckArticleRequest) returns (AllArticleResponse) { }
+}
+
+message CreateArticleRequest {
+    CreateArtInput createArtInput = 1;
+    message CreateArtInput {
+        string title = 1;
+        int32 userId = 2;
+        int32 classifyId = 3;
+        string cover = 4;
+        string abstract = 5;
+        string content = 6;
+        bool top = 7;
+        string source = 8;
+        string sourceUrl = 9;
+    }
+}
+
+message UpdateArticleRequest {
+    int32 id = 1;
+    UpdateArtInput updateArtInput = 2;
+    message UpdateArtInput {
+        string title = 1;
+        int32 classifyId = 2;
+        string sourceUrl = 3;
+        string cover = 4;
+        string abstract = 5;
+        string content = 6;
+        bool top = 7;
+        string source = 8;
+    }
+}
+
+message RecycleArticleRequest {
+    repeated int32 ids = 1;
+}
+
+message DeleteArticleRequest {
+    repeated int32 ids = 1;
+}
+
+message RecoverArticleRequest {
+    repeated int32 ids = 1;
+}
+
+message AuditArticleRequest {
+    repeated int32 ids = 1;
+    int32 status = 2;
+    string refuseReason = 3;
+}
+
+message GetAllArticleRequest {
+    int32 classifyId = 1;
+    string createdAt = 2;
+    string title = 3;
+}
+
+message AllArticleResponse {
+    int32 code = 1;
+    string message = 2;
+    repeated ArtData data = 3;
+}
+
+message ArtData {
+    int32 id = 1;
+    string title = 2;
+    string source = 3;
+    int32 classifyId = 4;
+    string sourceUrl = 5;
+    bool top = 6;
+    int32 views = 7;
+    string cover = 8;
+    string abstract = 9;
+    string content = 10;
+    int32 status = 11;
+    string refuseReason = 12;
+    bool recycling = 13;
+    string createAt = 14;
+}
+
+message GetRecycleArticleRequest {
+    int32 classifyId = 1;
+    string createdAt = 2;
+    string title = 3;
+}
+
+message GetArticleByIdRequest {
+    int32 id = 1;
+}
+
+message ArticleResponse {
+    ArtData article = 1;
+}
+
+message GetCheckArticleRequest {
+    int32 classifyId = 1;
+    string createdAt = 2;
+    string title = 3;
 }
