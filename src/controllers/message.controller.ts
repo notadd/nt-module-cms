@@ -3,7 +3,7 @@ import { GrpcMethod } from '@nestjs/microservices';
 import { MessageService } from "../services/message.service";
 
 @Controller()
-export class ClassifyController {
+export class MessageController {
     constructor(
         @Inject(MessageService) private readonly messageService: MessageService
     ) { }
