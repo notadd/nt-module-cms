@@ -1,6 +1,5 @@
 import {Column, JoinColumn, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn} from 'typeorm';
-import { ClassifyEntity } from './classify.entity';
-const moment = require('moment');
+import * as moment from 'moment';
 @Entity('article_entity_table')
 export class ArticleEntity {
     /*文章Id*/

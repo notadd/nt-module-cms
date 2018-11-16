@@ -4,7 +4,6 @@ import {
     Entity,
     OneToMany, Tree, TreeChildren, TreeParent
 } from 'typeorm';
-import { ArticleEntity } from './article.entity';
 
 @Entity('article_classify_table')
 @Tree('nested-set')
