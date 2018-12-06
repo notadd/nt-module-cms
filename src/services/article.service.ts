@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ArticleEntity } from "../entities/article.entity";
 import { Repository, TreeRepository } from "typeorm";
@@ -6,16 +6,25 @@ import { ClassifyEntity } from "../entities/classify.entity";
 import { inputArticle, updateArticle } from "../interfaces/article.interface";
 import { RpcException } from "@nestjs/microservices";
 import { MessageEntity } from "../entities/message.entity";
+import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
 const _ = require('underscore');
 
 
 @Injectable()
 export class ArticleService {
+
+    onModuleInit(){
+        this.userServiceInterface = this.notaddGrpcClientFactory.userModuleClient.getService('UserService');
+    }
+
     constructor(
         @InjectRepository(ArticleEntity) private readonly artRepo: Repository<ArticleEntity>,
         @InjectRepository(ClassifyEntity) private readonly claRepo: TreeRepository<ClassifyEntity>,
-        @InjectRepository(MessageEntity) private readonly mesRepo: Repository<MessageEntity>
+        @InjectRepository(MessageEntity) private readonly mesRepo: Repository<MessageEntity>,
+        @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
     ) { }
+
+    private userServiceInterface;
 
     /**
      * 创建文章
@@ -132,7 +141,7 @@ export class ArticleService {
                 for (let i = 0; i < ids.length; i++) {
                     await this.mesRepo.save(this.mesRepo.create({
                         content: `你的文章《${arts[i].title}》已被拒绝,原因如下:${refuseReason}`,
-                        owner: arts[i].id
+                        owner: arts[i].userId
                     }));
                 }
                 break;
