@@ -69,7 +69,6 @@ export class ArticleEntity {
 
     /*文章状态, 0 待审核 1 审核通过 2  被拒绝  */
     @Column({
-        name: 'status',
         default: 0
     })
     status: number;
@@ -110,32 +109,5 @@ export class ArticleEntity {
     })
     createdAt: string;
 
-    // /*分类*/
-    // @ManyToOne(
-    //     type => ClassifyEntity, classifyEntity => classifyEntity.articles, {
-    //         cascade: true,
-    //         onDelete: 'CASCADE',
-    //         lazy: false,
-    //         eager: false
-    //     }
-    // )
-    // @JoinColumn({
-    //     name: 'classifyId',
-    //     referencedColumnName: 'id'
-    // })
-    // classify: ClassifyEntity;
-
-    // /*创建时间*/
-    // @CreateDateColumn({
-    //     transformer: {
-    //         from: (date) => {
-    //             return moment(date).format('YYYY-MM-DD HH:mm:ss');
-    //         },
-    //         to: () => {
-    //             return new Date();
-    //         }
-    //     }
-    // })
-    // createAt: string;
 }
 
