@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TreeRepository, Repository, In } from "typeorm";
 import { RpcException } from "@nestjs/microservices";
 import { MessageEntity } from "../entities/message.entity";
+import { UserMessage } from "src/entities/user-message.entity";
 
 
 @Injectable()
 export class MessageService {
     constructor(
         @InjectRepository(MessageEntity) private readonly mesRepo: Repository<MessageEntity>,
+        @InjectRepository(UserMessage) private readonly umesRepo: Repository<UserMessage>,
     ) { }
 
     async createMessage(content: string, owner: number) {
@@ -16,14 +18,18 @@ export class MessageService {
             await this.mesRepo.save(this.mesRepo.create({
                 content, owner
             }))
+            await this.umesRepo.save(this.umesRepo.create({
+
+            }))
         } catch (err) {
             throw new RpcException({ code: 400, message: err.toString() });
         }
     }
 
-    async deleteMessageById(id: number) {
+    async deleteMessageById(ids: number[]) {
         try {
-            await this.mesRepo.delete(id);
+            const exist = await this.mesRepo.findByIds(ids);
+            await this.mesRepo.remove(exist);
         } catch (err) {
             throw new RpcException({ code: 400, message: err.toString() });
         }
@@ -48,11 +54,9 @@ export class MessageService {
     }
 
     async getMessageByUserId(pageNumber: number, pageSize: number, startTime: string, endTime: string,id:number){
-        const s = [0];
+        const s = [];
         s.push(id);
         const exist = await this.mesRepo.createQueryBuilder('message')
-            // .where(`'message.owner in (${id},null) '`)
-            // .where('message.owner IN (:...owners) ', { owners: `${id},0` })
             .where('message.owner IN(' + s + ')')
             .andWhere('case when :startTime1 <> \'\' then "createdAt" >= :startTime2 and "createdAt" <= :endTime else "createdAt" is not null end', {
                 startTime1: startTime ? startTime : '',

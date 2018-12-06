@@ -15,8 +15,8 @@ export class MessageController {
     }
 
     @GrpcMethod('MessageService')
-    async deleteMessageById(body: { id: number }) {
-        await this.messageService.deleteMessageById(body.id);
+    async deleteMessageById(body: { ids: number[] }) {
+        await this.messageService.deleteMessageById(body.ids);
         return { code: 200, message: '删除成功!' };
     }
 
