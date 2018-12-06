@@ -77,7 +77,7 @@ message MobileArticlesRequest {
 
 service MessageService {
     rpc CreateMessage(CreateMessageRequest) returns (StringDataResponse) { }
-    rpc DeleteMessageById(DeleteMessageByIdRequest) returns (StringDataResponse) { }
+    rpc DeleteMessageByIds(DeleteMessageByIdRequest) returns (StringDataResponse) { }
     rpc GetAllMessage(GetAllMessageRequest) returns (GetAllMessageResponse) { }
 }
 
