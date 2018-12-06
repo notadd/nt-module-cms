@@ -79,7 +79,6 @@ service MessageService {
     rpc CreateMessage(CreateMessageRequest) returns (StringDataResponse) { }
     rpc DeleteMessageById(DeleteMessageByIdRequest) returns (StringDataResponse) { }
     rpc GetAllMessage(GetAllMessageRequest) returns (GetAllMessageResponse) { }
-    rpc GetMessageByUserId(DeleteMessageByIdRequest) returns (GetAllMessageResponse) { }
 }
 
 message CreateMessageRequest {
@@ -88,11 +87,7 @@ message CreateMessageRequest {
 }
 
 message DeleteMessageByIdRequest {
-    int32 pageNumber = 1;
-    int32 pageSize = 2;
-    string startTime = 3;
-    string endTime = 4;
-    int32 id = 5;
+    repeated int32 id = 1;
 }
 
 message GetAllMessageRequest {
@@ -101,6 +96,7 @@ message GetAllMessageRequest {
     string startTime = 3;
     string endTime = 4;
 }
+
 
 message GetAllMessageResponse {
     int32 code = 1;
@@ -115,6 +111,58 @@ message Mes {
     string createAt = 3;
     int32 owner = 4;
 }
+
+service UserMessageService {
+    rpc GetMessageByUserId(GetMessageByUserIdRequest) returns (GetMessageByUserIdResponse) { }
+    rpc ReadMessageById(ReadMessageByIdRequest) returns (StringDataResponse) { }
+    rpc ReadAll(ReadAllRequest) returns (StringDataResponse) { }
+    rpc GetMessageById(GetMessageByIdRequest) returns (GetMessageByIdResponse) { }
+    rpc delMessageByIds(delMessageByIdsRequest) returns (StringDataResponse) { }
+}
+
+message GetMessageByUserIdRequest {
+    int32 pageNumber = 1;
+    int32 pageSize = 2;
+    int32 id = 3;
+}
+
+message GetMessageByUserIdResponse {
+    int32 code = 1;
+    string message = 2;
+    repeated UserMes data = 3;
+    int32 total = 4;
+}
+
+message UserMes {
+    int32 id = 1;
+    string content = 2;
+    string createAt = 3;
+    int32 owner = 4;
+    boolean state = 5;
+}
+
+message ReadMessageByIdResponse {
+    int32 id = 1;
+}
+
+message ReadAllRequest {
+    int32 id = 1;
+}
+
+message GetMessageByIdRequest {
+    int32 id = 1;
+}
+
+message GetMessageByIdResponse {
+    int32 code = 1;
+    string message = 2;
+    UserMes data = 3;
+}
+
+message delMessageByIdsRequest {
+    repeated int32 id = 1;
+}
+
 
 service ArticleService {
     rpc CreateArticle(CreateArticleRequest) returns (StringDataResponse) { }
