@@ -19,7 +19,7 @@
     "@nestjs/core": "^5.3.11",
     "@nestjs/microservices": "^5.3.11",
     "@nestjs/typeorm": "^5.2.2",
-    "grpc": "^1.15.1",
+    "grpc": "^1.17.0-pre1",
     "moment": "^2.22.2",
     "pg": "^7.5.0",
     "reflect-metadata": "^0.1.12",
