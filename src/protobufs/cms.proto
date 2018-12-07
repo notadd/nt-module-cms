@@ -229,12 +229,15 @@ message GetAllArticleRequest {
     int32 classifyId = 1;
     string createdAt = 2;
     string title = 3;
+    int32 pageNumber = 4;
+    int32 pageSize = 5;
 }
 
 message AllArticleResponse {
     int32 code = 1;
     string message = 2;
     repeated ArtData data = 3;
+    int32 total = 4;
 }
 
 message ArtData {
@@ -252,12 +255,16 @@ message ArtData {
     string refuseReason = 12;
     bool recycling = 13;
     string createAt = 14;
+    int32 userId = 15;
+    string username = 16;
 }
 
 message GetRecycleArticleRequest {
     int32 classifyId = 1;
     string createdAt = 2;
     string title = 3;
+    int32 pageNumber = 4;
+    int32 pageSize = 5;
 }
 
 message GetArticleByIdRequest {
@@ -272,4 +279,6 @@ message GetCheckArticleRequest {
     int32 classifyId = 1;
     string createdAt = 2;
     string title = 3;
+    int32 pageNumber = 4;
+    int32 pageSize = 5;
 }
