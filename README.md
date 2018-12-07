@@ -10,7 +10,7 @@
 
 在应用程序中的GRPC客户端文件中注入CMS模块并导入proto文件,使用GRPC通信,再由客户端提供Graphql接口即可调用CMS模块的所有接口。
 
-CMS模块目前所有接口均无限制,如需要权限限制，可以自行关联用户模块。
+CMS模块目前所有接口均无限制,如需要权限限制，可以参考用户中心模块的资源定义及权限定义。(https://github.com/notadd/nt-module-user/blob/graphql-api/README_zh.md)
 
 ##接口说明
 
