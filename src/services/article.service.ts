@@ -3,17 +3,18 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { ArticleEntity } from "../entities/article.entity";
 import { Repository, TreeRepository } from "typeorm";
 import { ClassifyEntity } from "../entities/classify.entity";
-import { inputArticle, updateArticle } from "../interfaces/article.interface";
+import { inputArticle, updateArticle, artResult } from "../interfaces/article.interface";
 import { RpcException } from "@nestjs/microservices";
 import { MessageEntity } from "../entities/message.entity";
 import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
+import { UserInfoData } from "src/interfaces/user.interface";
 const _ = require('underscore');
 
 
 @Injectable()
 export class ArticleService {
 
-    onModuleInit(){
+    onModuleInit() {
         this.userServiceInterface = this.notaddGrpcClientFactory.userModuleClient.getService('UserService');
     }
 
@@ -150,7 +151,7 @@ export class ArticleService {
         }
     }
 
-    async getAllArticle(classifyId: number, createdAt: string, title: string) {
+    async getAllArticle(classifyId: number, createdAt: string, title: string, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article');
         if (classifyId) {
             sqb.where('article.classifyId = :classifyId', { classifyId });
@@ -164,11 +165,32 @@ export class ArticleService {
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
-        const result = await sqb.getMany();
-        return result;
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).getMany();
+        const exist: artResult[] = [];
+        const total = await sqb.getCount();
+        for (const i of result) {
+            const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
+            const classify = await this.claRepo.findOne({ where: { id: i.classifyId } });
+            const a = {
+                id: i.id,
+                title: i.title,
+                classifyId: i.classifyId,
+                classifyName: classify.name,
+                sourceUrl: i.sourceUrl,
+                cover: i.cover,
+                abstract: i.abstract,
+                content: i.content,
+                top: i.top,
+                source: i.source,
+                userId: user.id,
+                userName: user.username
+            }
+            exist.push(a);
+        }
+        return { exist, total };
     }
 
-    async getRecycleArticle(classifyId: number, createdAt: string, title: string) {
+    async getRecycleArticle(classifyId: number, createdAt: string, title: string, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article').where('article.recycling = :recycling', { recycling: true });
         if (classifyId) {
             sqb.andWhere('article.classifyId = :classifyId', { classifyId });
@@ -182,8 +204,29 @@ export class ArticleService {
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
-        const result = await sqb.getMany();
-        return result;
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).getMany();
+        const exist: artResult[] = [];
+        const total = await sqb.getCount();
+        for (const i of result) {
+            const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
+            const classify = await this.claRepo.findOne({ where: { id: i.classifyId } });
+            const a = {
+                id: i.id,
+                title: i.title,
+                classifyId: i.classifyId,
+                classifyName: classify.name,
+                sourceUrl: i.sourceUrl,
+                cover: i.cover,
+                abstract: i.abstract,
+                content: i.content,
+                top: i.top,
+                source: i.source,
+                userId: user.id,
+                userName: user.username
+            }
+            exist.push(a);
+        }
+        return { exist, total };
     }
 
     async getArticleById(id: number) {
@@ -191,7 +234,7 @@ export class ArticleService {
         return art;
     }
 
-    async getCheckArticle(classifyId: number, createdAt: string, title: string) {
+    async getCheckArticle(classifyId: number, createdAt: string, title: string, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article')
             .where('article.recycling = :recycling', { recycling: false })
             .andWhere('article.status = :status', { status: 0 });
@@ -207,8 +250,29 @@ export class ArticleService {
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
-        const result = await sqb.getMany();
-        return result;
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).getMany();
+        const exist: artResult[] = [];
+        const total = await sqb.getCount();
+        for (const i of result) {
+            const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
+            const classify = await this.claRepo.findOne({ where: { id: i.classifyId } });
+            const a = {
+                id: i.id,
+                title: i.title,
+                classifyId: i.classifyId,
+                classifyName: classify.name,
+                sourceUrl: i.sourceUrl,
+                cover: i.cover,
+                abstract: i.abstract,
+                content: i.content,
+                top: i.top,
+                source: i.source,
+                userId: user.id,
+                userName: user.username
+            }
+            exist.push(a);
+        }
+        return { exist, total };
     }
 
 
