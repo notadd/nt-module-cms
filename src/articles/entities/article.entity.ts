@@ -1,5 +1,6 @@
-import {Column, JoinColumn, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn} from 'typeorm';
+import { Column, JoinColumn, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import * as moment from 'moment';
+import { ClassifyEntity } from './classify.entity';
 @Entity('article_entity_table')
 export class ArticleEntity {
     /*文章Id*/
@@ -8,7 +9,7 @@ export class ArticleEntity {
 
     /* 作者id*/
     @Column({
-        comment:'作者id',
+        comment: '作者id',
         nullable: true
     })
     userId: number;
@@ -19,12 +20,6 @@ export class ArticleEntity {
         length: 120,
     })
     title: string;
-
-    /*分类Id*/
-    @Column({
-        nullable: true,
-    })
-    classifyId: number;
 
     /* 访问量*/
     @Column({
@@ -108,6 +103,15 @@ export class ArticleEntity {
         }
     })
     createdAt: string;
+
+    /*分类Id*/
+    @ManyToOne(type => ClassifyEntity, classify => classify.articles, { onDelete: 'CASCADE', cascade: true })
+    @JoinColumn({
+        name: 'classifyId',
+        referencedColumnName: 'id'
+    })
+    classify: ClassifyEntity;
+
 
 }
 

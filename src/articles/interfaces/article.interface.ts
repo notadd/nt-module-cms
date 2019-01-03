@@ -25,7 +25,6 @@ export interface updateArticle {
 export  interface artResult {
     id: number;
     title: string;
-    classifyId: number;
     classifyName: string;
     sourceUrl: string;
     cover: string;

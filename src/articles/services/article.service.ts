@@ -7,7 +7,8 @@ import { inputArticle, updateArticle, artResult } from "../interfaces/article.in
 import { RpcException } from "@nestjs/microservices";
 import { MessageEntity } from "../entities/message.entity";
 import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
-import { UserInfoData } from "src/interfaces/user.interface";
+import { now } from "moment";
+import { UserInfoData } from "../interfaces/user.interface";
 const _ = require('underscore');
 
 
@@ -151,17 +152,20 @@ export class ArticleService {
         }
     }
 
-    async getAllArticle(classifyId: number, createdAt: string, title: string, pageNumber: number, pageSize: number) {
+    async getAllArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article');
         if (classifyId) {
-            sqb.where('article.classifyId = :classifyId', { classifyId });
+            sqb.where('article.classify = :classifyId', { classifyId });
         }
         if (title) {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
+        if (username) {
+
+        }
         if (createdAt) {
             const min = new Date(createdAt);
-            const max = new Date(this.addDate(min, 1));
+            const max = endTime ? new Date(endTime) : new Date();
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
@@ -170,11 +174,10 @@ export class ArticleService {
         const total = await sqb.getCount();
         for (const i of result) {
             const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
-            const classify = await this.claRepo.findOne({ where: { id: i.classifyId } });
+            const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,
                 title: i.title,
-                classifyId: i.classifyId,
                 classifyName: classify.name,
                 sourceUrl: i.sourceUrl,
                 cover: i.cover,
@@ -190,17 +193,20 @@ export class ArticleService {
         return { exist, total };
     }
 
-    async getRecycleArticle(classifyId: number, createdAt: string, title: string, pageNumber: number, pageSize: number) {
+    async getRecycleArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article').where('article.recycling = :recycling', { recycling: true });
         if (classifyId) {
-            sqb.andWhere('article.classifyId = :classifyId', { classifyId });
+            sqb.andWhere('article.classify = :classifyId', { classifyId });
         }
         if (title) {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
+        if (username) {
+
+        }
         if (createdAt) {
             const min = new Date(createdAt);
-            const max = new Date(this.addDate(min, 1));
+            const max = endTime ? new Date(endTime) : new Date();
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
@@ -209,11 +215,10 @@ export class ArticleService {
         const total = await sqb.getCount();
         for (const i of result) {
             const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
-            const classify = await this.claRepo.findOne({ where: { id: i.classifyId } });
+            const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,
                 title: i.title,
-                classifyId: i.classifyId,
                 classifyName: classify.name,
                 sourceUrl: i.sourceUrl,
                 cover: i.cover,
@@ -234,19 +239,22 @@ export class ArticleService {
         return art;
     }
 
-    async getCheckArticle(classifyId: number, createdAt: string, title: string, pageNumber: number, pageSize: number) {
+    async getCheckArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article')
             .where('article.recycling = :recycling', { recycling: false })
             .andWhere('article.status = :status', { status: 0 });
         if (classifyId) {
-            sqb.andWhere('article.classifyId = :classifyId', { classifyId });
+            sqb.andWhere('article.classify = :classifyId', { classifyId });
         }
         if (title) {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
+        if (username) {
+
+        }
         if (createdAt) {
             const min = new Date(createdAt);
-            const max = new Date(this.addDate(min, 1));
+            const max = endTime ? new Date(endTime) : new Date();
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
@@ -255,11 +263,10 @@ export class ArticleService {
         const total = await sqb.getCount();
         for (const i of result) {
             const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
-            const classify = await this.claRepo.findOne({ where: { id: i.classifyId } });
+            const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,
                 title: i.title,
-                classifyId: i.classifyId,
                 classifyName: classify.name,
                 sourceUrl: i.sourceUrl,
                 cover: i.cover,

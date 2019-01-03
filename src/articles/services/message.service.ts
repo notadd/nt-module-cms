@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TreeRepository, Repository, In } from "typeorm";
 import { RpcException } from "@nestjs/microservices";
 import { MessageEntity } from "../entities/message.entity";
-import { UserMessage } from "src/entities/user-message.entity";
+import { UserMessage } from "../entities/user-message.entity";
 
 
 @Injectable()

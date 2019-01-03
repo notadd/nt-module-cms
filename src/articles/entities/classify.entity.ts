@@ -4,6 +4,7 @@ import {
     Entity,
     OneToMany, Tree, TreeChildren, TreeParent
 } from 'typeorm';
+import { ArticleEntity } from './article.entity';
 
 @Entity('article_classify_table')
 @Tree('nested-set')
@@ -19,6 +20,18 @@ export class ClassifyEntity {
     })
     name: string;
 
+    @Column({
+        comment: '分类别名',
+        unique: true
+    })
+    alias: string;
+
+    @Column({
+        comment: '只显示子级分类文章',
+        default: false
+    })
+    onlyChildrenArt: boolean;
+
     @TreeChildren()
     children: ClassifyEntity[];
 
@@ -26,9 +39,6 @@ export class ClassifyEntity {
     parent: ClassifyEntity;
 
 
-    // @OneToMany(
-    //     type => ArticleEntity,
-    //     articleEntity => articleEntity.classify,
-    // )
-    // articles: ArticleEntity[];
+    @OneToMany(type => ArticleEntity,article => article.classify)
+    articles: ArticleEntity[];
 }

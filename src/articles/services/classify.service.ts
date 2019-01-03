@@ -16,7 +16,7 @@ export class ClassifyService {
     /**
      * 新增文章分类
      * 
-     * @param classify 新增分类实体: {name:'xxx',parentId:1}
+     * @param classify 新增分类实体: {name:'xxx',parent:{id:1},}
      */
     async addClassify(classify: CreateClassify) {
         try {
@@ -32,9 +32,13 @@ export class ClassifyService {
                 }
                 classify.parent = exist;
             }
+            const result = await this.claRepository.findOne({ where: { alias: classify.alias } });
+            if (result) {
+                throw new RpcException({ code: 406, message: '别名重复!' });
+            }
             await this.claRepository.save(await this.claRepository.create(classify));
         } catch (err) {
-            throw new RpcException({ code: 404, message: err.toString });
+            throw new RpcException({ code: 404, message: err.toString() });
         }
         return { code: 200, message: '创建成功!' }
     }
@@ -90,9 +94,9 @@ export class ClassifyService {
         if (!exist) {
             return { code: 404, message: '当前分类不存在!' };
         }
-        if (classify.name && classify.name !== exist.name) {
-            if (await this.claRepository.findOne({ where: { name: classify.name } })) {
-                throw new RpcException({ code: 409, message: '该分类名称已存在!' });
+        if (classify.alias && classify.alias !== exist.alias) {
+            if (await this.claRepository.findOne({ where: { alias: classify.alias } })) {
+                throw new RpcException({ code: 409, message: '该分类别名已存在!' });
             }
         }
         const parent = await this.claRepository.findOne({ id: classify.parent.id });
@@ -170,9 +174,19 @@ export class ClassifyService {
             return { code: 404, message: '所选分类不存在!' };
         }
         const array = await this.getAllClassifyIds(classifyId);
+        const ids = await this.artRepository.createQueryBuilder('art')
+            .where('"art"."classifyId" in(:...id)', {
+                id: array
+            })
+            .getMany();
+        if (!ids.length) {
+            return { code: 404, message: '原分类下不存在文章!' };
+        }
         try {
             // 修改文章分类
-            await this.artRepository.update({ classifyId: In(array) }, { classifyId: newClassifyId });
+            for (const i of ids) {
+                 await this.artRepository.update(i.id, { classify: newClassify });
+            }
         } catch (err) {
             throw new RpcException({ code: 405, message: err.toString });
         }
