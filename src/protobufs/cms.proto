@@ -22,7 +22,9 @@ service ClassifyService {
 
 message CreateClassifyRequest {
     string name = 1;
-    UpdateClassify parent = 2;
+    string alias = 2;
+    UpdateClassify parent = 3;
+    bool onlyChildrenArt = 4;
 }
 
 message UpdateClassify {
@@ -44,7 +46,9 @@ message DelClassifyRequest {
 message UpdateClassifyRequest {
     int32 id = 1;
     string name = 2;
-    UpdateClassify parent = 3;
+    string alias = 3;
+    bool onlyChildrenArt = 4;
+    UpdateClassify parent = 5;
 }
 
 message FindAllClassifyRequest {
@@ -66,8 +70,10 @@ message FindOneClassifyResponse {
 message ClassifyData {
     int32 id = 1;
     string name = 2;
-    repeated ClassifyData children = 3;
-    ClassifyData parent = 4;
+    string alias = 3;
+    bool onlyChildrenArt = 4;
+    repeated ClassifyData children = 5;
+    ClassifyData parent = 6;
 }
 
 message MobileArticlesRequest {
@@ -117,7 +123,7 @@ service UserMessageService {
     rpc ReadMessageById(ReadMessageByIdRequest) returns (StringDataResponse) { }
     rpc ReadAll(ReadAllRequest) returns (StringDataResponse) { }
     rpc GetMessageById(GetMessageByIdRequest) returns (GetMessageByIdResponse) { }
-    rpc delMessageByIds(delMessageByIdsRequest) returns (StringDataResponse) { }
+    rpc DelMessageByIds(delMessageByIdsRequest) returns (StringDataResponse) { }
 }
 
 message GetMessageByUserIdRequest {
@@ -138,10 +144,10 @@ message UserMes {
     string content = 2;
     string createAt = 3;
     int32 owner = 4;
-    boolean state = 5;
+    bool state = 5;
 }
 
-message ReadMessageByIdResponse {
+message ReadMessageByIdRequest {
     int32 id = 1;
 }
 
@@ -281,4 +287,37 @@ message GetCheckArticleRequest {
     string title = 3;
     int32 pageNumber = 4;
     int32 pageSize = 5;
+}
+
+service ArtItemService {
+    rpc CreateArtItem(CreateArtItemRequest) returns (StringDataResponse) { }
+    rpc UpdateArtItem(UpdateArtItemRequest) returns (StringDataResponse) { }
+    rpc DeleteArtItem(DeleteArtItemRequest) returns (StringDataResponse) { }
+}
+
+message CreateArtItemRequest {
+    CreateArtItemInput createArtItemInput = 1;
+    message CreateArtItemInput {
+        string name = 1;
+        string explain = 2;
+        string style = 3;
+        string regular = 4;
+        string info = 5;
+    }
+}
+
+message UpdateArtItemRequest {
+    UpdateArtItemInput updateArtItemInput = 1;
+    message UpdateArtItemInput {
+        int32 id = 1;
+        string name = 2;
+        string explain = 3;
+        string style = 4;
+        string regular = 5;
+        string info = 6;
+    }
+}
+
+message DeleteArtItemRequest {
+    int32 id = 1;
 }
