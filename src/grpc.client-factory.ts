@@ -14,7 +14,7 @@ export function generateGrpcOptions(url: string, packageName: string, protoFileN
         options: {
             url,
             package: packageName,
-            protoPath: join(__dirname, 'protobufs/' + protoFileName),
+            protoPath: join(__dirname, 'grpc/protobufs/' + protoFileName),
             loader: {
                 arrays: true
             }

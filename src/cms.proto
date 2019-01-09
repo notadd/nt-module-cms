@@ -25,6 +25,15 @@ message CreateClassifyRequest {
     string alias = 2;
     UpdateClassify parent = 3;
     bool onlyChildrenArt = 4;
+    repeated ClassifyItemInput = 5;
+}
+
+message ClassifyItemInput {
+    string name = 1;
+    string alias = 2;
+    bool required = 3;
+    int32 order = 4;
+    int32 itemId = 5;
 }
 
 message UpdateClassify {
@@ -74,6 +83,18 @@ message ClassifyData {
     bool onlyChildrenArt = 4;
     repeated ClassifyData children = 5;
     ClassifyData parent = 6;
+    repeated InfoItemData classifyItem = 7;
+}
+
+message InfoItemData {
+    int32 id = 1;
+    string type = 2;
+    int32 order = 3;
+    string name = 4;
+    string explain = 5;
+    string style = 6;
+    string regular = 7;
+    string info = 8;
 }
 
 message MobileArticlesRequest {
@@ -195,6 +216,11 @@ message CreateArticleRequest {
         bool top = 7;
         string source = 8;
         string sourceUrl = 9;
+        repeated CreateInfoKV infoKVs = 10;
+    }
+    message CreateInfoKV {
+        int32 key = 1;
+        string value = 2;
     }
 }
 
@@ -260,9 +286,16 @@ message ArtData {
     int32 status = 11;
     string refuseReason = 12;
     bool recycling = 13;
-    string createAt = 14;
+    string createdAt = 14;
     int32 userId = 15;
     string username = 16;
+    repeated ArtInfos artInfos = 17;
+}
+
+message ArtInfos {
+    int32 id = 1;
+    int32 relationId = 2;
+    string value = 3;
 }
 
 message GetRecycleArticleRequest {
@@ -289,15 +322,15 @@ message GetCheckArticleRequest {
     int32 pageSize = 5;
 }
 
-service ArtItemService {
-    rpc CreateArtItem(CreateArtItemRequest) returns (StringDataResponse) { }
-    rpc UpdateArtItem(UpdateArtItemRequest) returns (StringDataResponse) { }
-    rpc DeleteArtItem(DeleteArtItemRequest) returns (StringDataResponse) { }
+service ItemService {
+    rpc CreateItem(CreateItemRequest) returns (StringDataResponse) { }
+    rpc UpdateItem(UpdateItemRequest) returns (StringDataResponse) { }
+    rpc DeleteItem(DeleteItemRequest) returns (StringDataResponse) { }
 }
 
-message CreateArtItemRequest {
-    CreateArtItemInput createArtItemInput = 1;
-    message CreateArtItemInput {
+message CreateItemRequest {
+    CreateItemInput createItemInput = 1;
+    message CreateItemInput {
         string name = 1;
         string explain = 2;
         string style = 3;
@@ -306,9 +339,9 @@ message CreateArtItemRequest {
     }
 }
 
-message UpdateArtItemRequest {
-    UpdateArtItemInput updateArtItemInput = 1;
-    message UpdateArtItemInput {
+message UpdateItemRequest {
+    UpdateItemInput updateItemInput = 1;
+    message UpdateItemInput {
         int32 id = 1;
         string name = 2;
         string explain = 3;
@@ -318,6 +351,138 @@ message UpdateArtItemRequest {
     }
 }
 
-message DeleteArtItemRequest {
+message DeleteItemRequest {
     int32 id = 1;
+}
+
+service ClassifyItemService {
+    rpc UpdateClassifyItem(UpdateClassifyItemRequest) returns (StringDataResponse) { }
+    rpc DeleteClassifyItem(UpdateClassifyItemRequest) returns (StringDataResponse) { }
+}
+
+message UpdateClassifyItemRequest {
+    int32 id = 1;
+}
+
+service PageSortService {
+    rpc CreatePageSort(CreatePageSortRequest) returns (StringDataResponse) { }
+    rpc UpdatePageSort(UpdatePageSortRequest) returns (StringDataResponse) { }
+    rpc DeletePageSort(DeletePageSortRequest) returns (StringDataResponse) { }
+    rpc GetAllPageSort (GetAllPageSortRequest) returns (GetAllPageSortResponse) { }
+    rpc GetOnePageSort (GetOnePageSortRequest) returns (GetOnePageSortResponse) { }
+}
+
+message CreatePageSortRequest {
+    CreatePageSortInput createPageSortInput = 1;
+    message CreatePageSortInput {
+        string name = 1;
+        string alias = 2;
+        UpdatePageSort parent = 3;
+    }
+}
+
+message UpdatePageSort {
+    int32 id = 1;
+    string name = 2;
+    string chainUrl = 3;
+    UpdateClassify parent = 4;
+}
+
+message UpdatePageSortRequest {
+    int32 id = 1;
+    string name = 2;
+    string alias = 3;
+    UpdatePageSort parent = 4;
+}
+
+message DeletePageSortRequest {
+    int32 id = 1;
+}
+
+message GetAllPageSortRequest {
+    int32 pageNumber = 1;
+    int32 pageSize = 2;
+}
+
+message GetAllPageSortResponse {
+    int32 code = 1;
+    string message = 2;
+    repeated PageSort data = 3;
+    int32 total = 4;
+}
+
+message PageSort {
+    int32 id = 1;
+    string name = 2;
+    string alias = 3;
+    repeated PageSort parent = 4;
+    repeated PageSort children = 5;
+}
+
+message GetOnePageSortRequest {
+    int32 id = 1;
+}
+
+message GetOnePageSortResponse {
+    int32 code = 1;
+    string message = 2;
+    PageSort parent = 3;
+}
+
+service PageService {
+    rpc CreatePage(CreatePageRequest) returns (StringDataResponse) { }
+    rpc UpdatePage(UpdatePageRequest) returns (StringDataResponse) { }
+    rpc DeletePage(DeletePageRequest) returns (StringDataResponse) { }
+    rpc GetAllPage(GetAllPageRequest) returns (GetAllPageResponse) { }
+    rpc GetOnePage(DeletePageRequest) returns (GetOnePageResponse) { }
+}
+
+message CreatePageRequest {
+    string name = 1;
+    string alias = 2;
+    int32 pageSortId = 3;
+    repeated ContentInput content = 4;
+}
+
+message ContentInput {
+    string name = 1;
+    string alias = 2;
+    string value = 3;
+}
+
+message UpdatePageRequest {
+    int32 id = 1;
+    string name = 2;
+    string alias = 3;
+    repeated ContentInput content = 4;
+    int32 pageSortId = 5;
+}
+
+message DeletePageRequest {
+    int32 id = 1;
+}
+message GetAllPageRequest {
+    int32 pageNumber = 1;
+    int32 pageSize = 2;
+    string name = 3;
+}
+
+message GetAllPageResponse {
+    int32 code = 1;
+    string message = 2;
+    repeated OnePage data = 3;
+    int32 total = 4;
+}
+
+message GetOnePageResponse {
+    int32 code = 1;
+    string message = 2;
+    OnePage data = 3;
+}
+
+message OnePage {
+    string name = 1;
+    string alias = 2;
+    int32 pageSortId = 3;
+    repeated ContentInput content = 4;
 }
