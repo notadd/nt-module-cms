@@ -2,7 +2,7 @@ import { Controller, Inject } from "@nestjs/common";
 import { GrpcMethod } from '@nestjs/microservices';
 import { CreateClassify } from "../interfaces/classify.interface";
 import { ClassifyService } from "../services/classify.service";
-import { ClassifyEntity } from "../entities/classify.entity";
+import { Classify } from "../entities/classify.entity";
 
 @Controller()
 export class ClassifyController {
@@ -23,7 +23,7 @@ export class ClassifyController {
     }
 
     @GrpcMethod('ClassifyService')
-    async updateClassify(body: { classify: ClassifyEntity }) {
+    async updateClassify(body: { classify: Classify }) {
         await this.classifyService.updateClassify(body.classify);
         return { code: 200, message: '修改成功!' };
     }

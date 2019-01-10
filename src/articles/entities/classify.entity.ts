@@ -2,13 +2,14 @@ import {
     PrimaryGeneratedColumn,
     Column,
     Entity,
-    OneToMany, Tree, TreeChildren, TreeParent
+    OneToMany, Tree, TreeChildren, TreeParent, ManyToOne
 } from 'typeorm';
-import { ArticleEntity } from './article.entity';
+import { Article } from './article.entity';
+import { ClassifyItem } from './classify-item.entity';
 
-@Entity('article_classify_table')
+@Entity('classify')
 @Tree('nested-set')
-export class ClassifyEntity {
+export class Classify {
     /*分类Id*/
     @PrimaryGeneratedColumn()
     id: number;
@@ -22,7 +23,8 @@ export class ClassifyEntity {
 
     @Column({
         comment: '分类别名',
-        unique: true
+        unique: true,
+        nullable: true
     })
     alias: string;
 
@@ -33,12 +35,16 @@ export class ClassifyEntity {
     onlyChildrenArt: boolean;
 
     @TreeChildren()
-    children: ClassifyEntity[];
+    children: Classify[];
 
     @TreeParent()
-    parent: ClassifyEntity;
+    parent: Classify;
 
 
-    @OneToMany(type => ArticleEntity,article => article.classify)
-    articles: ArticleEntity[];
+    @OneToMany(type => Article,article => article.classify)
+    articles: Article[];
+
+    @OneToMany(type => ClassifyItem,classifyItem=>classifyItem.classify)
+    classifyItems: ClassifyItem;
+
 }

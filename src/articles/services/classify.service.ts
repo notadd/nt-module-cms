@@ -1,28 +1,32 @@
 import { Injectable } from "@nestjs/common";
 import { CreateClassify } from "../interfaces/classify.interface";
 import { InjectRepository } from '@nestjs/typeorm';
-import { ClassifyEntity } from "../entities/classify.entity";
-import { ArticleEntity } from "../entities/article.entity";
+import { Classify } from "../entities/classify.entity";
+import { Article } from "../entities/article.entity";
 import { TreeRepository, Repository, In } from "typeorm";
 import { RpcException } from "@nestjs/microservices";
+import { ClassifyItem } from "../entities/classify-item.entity";
+import { Item } from "../entities/item.entity";
 
 @Injectable()
 export class ClassifyService {
     constructor(
-        @InjectRepository(ClassifyEntity) private readonly claRepository: TreeRepository<ClassifyEntity>,
-        @InjectRepository(ArticleEntity) private readonly artRepository: Repository<ArticleEntity>
+        @InjectRepository(Classify) private readonly claRepository: TreeRepository<Classify>,
+        @InjectRepository(Article) private readonly artRepository: Repository<Article>,
+        @InjectRepository(ClassifyItem) private readonly ciRepository: Repository<ClassifyItem>,
+        @InjectRepository(Item) private readonly itemRepository: Repository<Item>
     ) { }
 
     /**
      * 新增文章分类
      * 
-     * @param classify 新增分类实体: {name:'xxx',parent:{id:1},}
+     * @param classify 新增分类实体
      */
     async addClassify(classify: CreateClassify) {
         try {
             const ignore = await this.claRepository.count();
             if (!classify.parent.id || ignore <= 0) {
-                await this.claRepository.save({ name: classify.name });
+                await this.claRepository.save(this.claRepository.create({name:'总分类',alias:'总分类',onlyChildrenArt:true}));
                 return { code: 200, message: '创建成功' };
             }
             if (classify.parent) {
@@ -37,10 +41,23 @@ export class ClassifyService {
                 throw new RpcException({ code: 406, message: '别名重复!' });
             }
             await this.claRepository.save(await this.claRepository.create(classify));
+            const exist = await this.claRepository.findOne({where:{alias:classify.alias}});
+            if(classify.classifyItem){
+                for (const i of classify.classifyItem) {
+                    await this.ciRepository.save(this.ciRepository.create({
+                        name: i.name,
+                        alias: i.alias,
+                        required: i.required,
+                        order: i.order,
+                        classify: exist,
+                        item: await this.itemRepository.findOne(i.itemId)
+                    }));
+                }
+            }
+                
         } catch (err) {
-            throw new RpcException({ code: 404, message: err.toString() });
+            throw new RpcException(err);
         }
-        return { code: 200, message: '创建成功!' }
     }
 
     /**
@@ -49,9 +66,9 @@ export class ClassifyService {
      * @param id 文章分类id
      */
     async delClassify(id: number) {
-        const classify: ClassifyEntity = await this.claRepository.findOne({ id });
+        const classify: Classify = await this.claRepository.findOne({ id });
         if (!classify) {
-            return { code: 405, message: '当前分类不存在' };
+            return { code: 404, message: '当前分类不存在' };
         }
         const array = await this.getAllClassifyIds(id);
         const articles = await this.artRepository.count({ where: { classifyId: In(array) } });
@@ -87,9 +104,9 @@ export class ClassifyService {
     /**
      * 修改分类
      * 
-     * @param classify 被修改分类实体: {id:2,name:'xxx',parent:{id:1}}
+     * @param classify 被修改分类实体
      */
-    async updateClassify(classify: ClassifyEntity) {
+    async updateClassify(classify: Classify) {
         const exist = await this.claRepository.findOne({ id: classify.id });
         if (!exist) {
             return { code: 404, message: '当前分类不存在!' };
@@ -114,7 +131,7 @@ export class ClassifyService {
     /**
      * 查询所有分类
      * 
-     * @param id 
+     * @param id 不传时查询所有分类,传了则只查询该分类及其子分类
      */
     async getAllClassify(id: number) {
         if (id) {
@@ -140,7 +157,16 @@ export class ClassifyService {
         if (!exist) {
             throw new RpcException({ code: 200, message: '该分类不存在!' });
         }
-        const data = await this.claRepository.findDescendantsTree(exist);
+        const data1 = await this.claRepository.findDescendantsTree(exist);
+        const data2 = await this.claRepository.createQueryBuilder('classify').relation(Classify, 'classifyItems').of(id).loadMany();
+        const data = {
+            id : data1.id,
+            name: data1.name,
+            alias: data1.alias,
+            children: data1.children,
+            parent: data1.parent,
+            clasifyItem: data2
+        };
         return { data };
     }
 
