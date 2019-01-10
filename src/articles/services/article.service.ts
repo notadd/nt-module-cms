@@ -1,14 +1,17 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { ArticleEntity } from "../entities/article.entity";
+import { Article } from "../entities/article.entity";
 import { Repository, TreeRepository } from "typeorm";
-import { ClassifyEntity } from "../entities/classify.entity";
+import { Classify } from "../entities/classify.entity";
 import { inputArticle, updateArticle, artResult } from "../interfaces/article.interface";
 import { RpcException } from "@nestjs/microservices";
 import { MessageEntity } from "../entities/message.entity";
 import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
 import { now } from "moment";
 import { UserInfoData } from "../interfaces/user.interface";
+import { ArtInfo } from "../entities/art-info.entity";
+import { Item } from "../entities/item.entity";
+import { notadd_module_user } from "src/grpc/generated";
 const _ = require('underscore');
 
 
@@ -16,17 +19,19 @@ const _ = require('underscore');
 export class ArticleService {
 
     onModuleInit() {
-        this.userServiceInterface = this.notaddGrpcClientFactory.userModuleClient.getService('UserService');
+        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<notadd_module_user.UserService>('UserService');
     }
 
     constructor(
-        @InjectRepository(ArticleEntity) private readonly artRepo: Repository<ArticleEntity>,
-        @InjectRepository(ClassifyEntity) private readonly claRepo: TreeRepository<ClassifyEntity>,
+        @InjectRepository(Article) private readonly artRepo: Repository<Article>,
+        @InjectRepository(Classify) private readonly claRepo: TreeRepository<Classify>,
         @InjectRepository(MessageEntity) private readonly mesRepo: Repository<MessageEntity>,
+        @InjectRepository(ArtInfo) private readonly aiRepo: Repository<ArtInfo>,
+        @InjectRepository(Item) private readonly itemRepo: Repository<Item>,
         @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
     ) { }
 
-    private userServiceInterface;
+    private userService: notadd_module_user.UserService;
 
     /**
      * 创建文章
@@ -38,7 +43,27 @@ export class ArticleService {
         if (!classify) {
             throw new RpcException({ code: 404, message: '该文章分类不存在!' });
         }
-        await this.artRepo.save(this.artRepo.create(art));
+        const exist = await this.artRepo.save(this.artRepo.create(art));
+        if (art.infoKVs && art.infoKVs.length) {
+            await this.createOrUpdateArtInfos(exist, art.infoKVs, 'create');
+        }
+    }
+
+    private async createOrUpdateArtInfos(art: Article, infoKVs: { key: number, value: string, relationId?: number }[], action: 'create' | 'update') {
+        if (infoKVs.length) {
+            if (action === 'create') {
+                infoKVs.forEach(async infoKV => {
+                    await this.aiRepo.save(this.aiRepo.create({ value: infoKV.value, article: art, item: { id: infoKV.key } }));
+                });
+            }
+            infoKVs.forEach(async infoKV => {
+                if (infoKV.key) {
+                    this.aiRepo.update(infoKV.key, { value: infoKV.value });
+                } else {
+                    await this.aiRepo.save(this.aiRepo.create({ value: infoKV.value, article: art, item: { id: infoKV.relationId } }));
+                }
+            });
+        }
     }
 
     /**
@@ -48,12 +73,15 @@ export class ArticleService {
      * 
      */
     async updateArticle(art: updateArticle) {
-        const article = await this.artRepo.findOne({ id: art.id });
+        const article = await this.artRepo.findOne(art.id, { relations: ['artInfos'] });
         if (!article) {
             throw new RpcException({ code: 404, message: '该文章不存在!' });
         }
         article.status = 0;
         await this.artRepo.save(this.artRepo.create(article));
+        if (art.infoKVs && art.infoKVs.length) {
+            await this.createOrUpdateArtInfos(article, art.infoKVs, 'update');
+        }
     }
 
 
@@ -161,7 +189,9 @@ export class ArticleService {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
         if (username) {
-
+            const result  = await this.userService.findOneWithRolesAndPermissions({username}).toPromise();
+            const userId = result.data.id;
+            sqb.andWhere('article.userId = :userId',{userId});
         }
         if (createdAt) {
             const min = new Date(createdAt);
@@ -173,7 +203,7 @@ export class ArticleService {
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
-            const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
+            const data = await this.userService.findUserInfoByIds({userIds:[i.userId]}).toPromise();
             const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,
@@ -185,8 +215,8 @@ export class ArticleService {
                 content: i.content,
                 top: i.top,
                 source: i.source,
-                userId: user.id,
-                userName: user.username
+                userId: data.data[0].id,
+                userName: data.data[0].username
             }
             exist.push(a);
         }
@@ -202,7 +232,9 @@ export class ArticleService {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
         if (username) {
-
+            const result  = await this.userService.findOneWithRolesAndPermissions({username}).toPromise();
+            const userId = result.data.id;
+            sqb.andWhere('article.userId = :userId',{userId});
         }
         if (createdAt) {
             const min = new Date(createdAt);
@@ -214,7 +246,7 @@ export class ArticleService {
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
-            const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
+            const user = await this.userService.findUserInfoByIds({userIds:[i.userId]}).toPromise();
             const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,
@@ -226,8 +258,8 @@ export class ArticleService {
                 content: i.content,
                 top: i.top,
                 source: i.source,
-                userId: user.id,
-                userName: user.username
+                userId: user.data[0].id,
+                userName: user.data[0].username
             }
             exist.push(a);
         }
@@ -235,8 +267,47 @@ export class ArticleService {
     }
 
     async getArticleById(id: number) {
-        const art = await this.artRepo.findOne(id);
-        return art;
+        const artQb = this.artRepo.createQueryBuilder('art')
+            .leftJoinAndSelect('art.artInfos', 'artInfos')
+            .leftJoinAndSelect('artInfos.Item', 'item');
+
+        const itemQb = await this.itemRepo.createQueryBuilder('item')
+            .leftJoinAndSelect('item.classifyItem', 'classifyItem')
+            .leftJoinAndSelect('classifyItem.classify', 'classify')
+            .leftJoinAndSelect('classify.articles', 'articles');
+
+        const art = await artQb.where('art.id = :id', { id }).getOne();
+        const item = await itemQb.where('articles.id = :id', { id }).orderBy('item.order', 'ASC').getMany();
+        return this.refactorArticle(art, item);
+    }
+
+    private refactorArticle(art: Article, items: Item[]) {
+        const artInfoData = {
+            id: art.id,
+            title: art.title,
+            source: art.source,
+            classifyId: art.classify,
+            sourceUrl: art.sourceUrl,
+            top: art.top,
+            views: art.views,
+            cover: art.cover,
+            abstract: art.abstract,
+            content: art.content,
+            status: art.status,
+            refuseReason: art.refuseReason,
+            recycling: art.recycling,
+            createdAt: art.createdAt,
+            userId: art.userId,
+            artInfos: items.length ? items.map(item => {
+                const artInfo = art.artInfos.find(artInfo => artInfo.item.id === item.id);
+                return {
+                    id: art.artInfos.length ? (artInfo ? artInfo.id : undefined) : undefined,
+                    relationId: item.id,
+                    value: art.artInfos.length ? (artInfo ? artInfo.value : undefined) : undefined,
+                };
+            }) : []
+        };
+        return artInfoData;
     }
 
     async getCheckArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
@@ -250,7 +321,9 @@ export class ArticleService {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
         if (username) {
-
+            const result  = await this.userService.findOneWithRolesAndPermissions({username}).toPromise();
+            const userId = result.data.id;
+            sqb.andWhere('article.userId = :userId',{userId});
         }
         if (createdAt) {
             const min = new Date(createdAt);
@@ -262,7 +335,7 @@ export class ArticleService {
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
-            const user = <UserInfoData>await this.userServiceInterface.findByIds(i.userId);
+            const user = <UserInfoData>await this.userService.findUserInfoByIds({userIds:[i.userId]}).toPromise();
             const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,

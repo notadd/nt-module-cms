@@ -8,6 +8,7 @@ export interface inputArticle {
     top: boolean;
     source: string;
     sourceUrl: string;
+    infoKVs?: { key: number; value: string }[];
 }
 
 export interface updateArticle {
@@ -20,6 +21,11 @@ export interface updateArticle {
     content: string;
     top: boolean;
     source: string;
+    infoKVs?: {
+        key: number;
+        value: string;
+        relationId?: number
+    }[];
 }
 
 export  interface artResult {

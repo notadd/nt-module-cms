@@ -1,8 +1,10 @@
-import { Column, JoinColumn, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, JoinColumn, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import * as moment from 'moment';
-import { ClassifyEntity } from './classify.entity';
-@Entity('article_entity_table')
-export class ArticleEntity {
+import { Classify } from './classify.entity';
+import { ArtInfo } from './art-info.entity';
+import { Comment } from 'src/plugin/comment/entities/comment.entity';
+@Entity('article')
+export class Article {
     /*文章Id*/
     @PrimaryGeneratedColumn()
     id: number;
@@ -97,21 +99,27 @@ export class ArticleEntity {
             from: (date) => {
                 return moment(date).format('YYYY-MM-DD HH:mm:ss');
             },
-            to: () => {
-                return new Date();
+            to: (date) => {
+                date = date ? date : new Date();
+                return moment(date).format('YYYY-MM-DD HH:mm:ss');
             }
         }
     })
     createdAt: string;
 
     /*分类Id*/
-    @ManyToOne(type => ClassifyEntity, classify => classify.articles, { onDelete: 'CASCADE', cascade: true })
+    @ManyToOne(type => Classify, classify => classify.articles, { onDelete: 'CASCADE', cascade: true })
     @JoinColumn({
         name: 'classifyId',
         referencedColumnName: 'id'
     })
-    classify: ClassifyEntity;
+    classify: Classify;
 
+    @OneToMany(type => ArtInfo, artInfo => artInfo.article)
+    artInfos: ArtInfo[];
+
+    @OneToMany(type=>Comment,comment=>comment.article)
+    comments: Comment[];
 
 }
 
