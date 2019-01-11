@@ -45,6 +45,6 @@ export class Classify {
     articles: Article[];
 
     @OneToMany(type => ClassifyItem,classifyItem=>classifyItem.classify)
-    classifyItems: ClassifyItem;
+    classifyItems: ClassifyItem[];
 
 }

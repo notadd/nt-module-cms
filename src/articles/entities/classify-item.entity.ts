@@ -33,7 +33,7 @@ export class ClassifyItem {
     @ManyToOne(type => Classify, classify => classify.classifyItems)
     classify: Classify;
 
-    @ManyToOne(type => Item, item => item.itemClassify)
+    @ManyToOne(type => Item, item => item.itemClassifys)
     item: Item;
 
 }
