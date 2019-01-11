@@ -6,7 +6,7 @@ import {
 } from 'typeorm';
 import { Page } from './page.entity';
 
-@Entity('page_sort_table')
+@Entity('page_sort')
 @Tree('nested-set')
 export class PageSort {
     /*分类Id*/

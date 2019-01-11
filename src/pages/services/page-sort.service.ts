@@ -4,6 +4,7 @@ import { PageSort } from "../entities/page-sort.entity";
 import { TreeRepository, In } from "typeorm";
 import { RpcException } from "@nestjs/microservices";
 import { Page } from "../entities/page.entity";
+import { CreatePageSort } from "../interfaces/page-sort.interface";
 
 @Injectable()
 export class PageSortService {
@@ -12,7 +13,7 @@ export class PageSortService {
         @InjectRepository(Page) private readonly pageRepo: TreeRepository<Page>,
     ) { }
 
-    async createPageSort(pageSort: PageSort) {
+    async createPageSort(pageSort: CreatePageSort) {
         try {
             const ignore = await this.psRepo.count();
             if (!pageSort.parent.id || ignore <= 0) {
