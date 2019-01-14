@@ -5,10 +5,8 @@ export interface UserInfoData {
     mobile: string;
     banned: boolean;
     recycle: boolean;
-    createTime: string;
-    updateTime: string;
-    status: number;
-    certification: number;
+    createdAt: string;
+    updatedAt: string;
     userRoles: {
         id: number;
         name: string
@@ -20,7 +18,7 @@ export interface UserInfoData {
     userInfos: {
         id: number;
         order: number;
-        relationId: number;
+        infoItemId: number;
         type: string;
         name: string;
         value: string;
