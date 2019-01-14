@@ -13,6 +13,12 @@ export class MessageService {
         @InjectRepository(UserMessage) private readonly umesRepo: Repository<UserMessage>,
     ) { }
 
+    /**
+     * 创建通知信息
+     * 
+     * @param content 信息内容
+     * @param owner 所属用户
+     */
     async createMessage(content: string, owner: number) {
         try {
             await this.mesRepo.save(this.mesRepo.create({
@@ -26,6 +32,11 @@ export class MessageService {
         }
     }
 
+    /**
+     * 批量删除通知信息
+     * 
+     * @param ids 批量删除的通知信息id
+     */
     async deleteMessageById(ids: number[]) {
         try {
             const exist = await this.mesRepo.findByIds(ids);
@@ -35,6 +46,14 @@ export class MessageService {
         }
     }
 
+    /**
+     * 后台获取所有通知消息
+     * 
+     * @param pageNumber 当前页码
+     * @param pageSize 每页显示数量
+     * @param startTime 起始时间
+     * @param endTime 截止时间
+     */
     async getAllMessage(pageNumber: number, pageSize: number, startTime: string, endTime: string) {
         try {
             const exist = await this.mesRepo.createQueryBuilder('message')
@@ -53,6 +72,15 @@ export class MessageService {
         }
     }
 
+    /**
+     * 获取指定用户的所有通知信息
+     * 
+     * @param pageNumber 当前页码
+     * @param pageSize 每页显示数量
+     * @param startTime 起始时间
+     * @param endTime 截止时间
+     * @param id 用户id
+     */
     async getMessageByUserId(pageNumber: number, pageSize: number, startTime: string, endTime: string,id:number){
         const s = [];
         s.push(id);
