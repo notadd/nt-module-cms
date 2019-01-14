@@ -10,7 +10,7 @@ async function bootstrap() {
         options: {
             url: 'localhost:50050',
             package: 'notadd_module_cms',
-            protoPath: join(__dirname, './protobufs/cms.proto'),
+            protoPath: join(__dirname, 'cms.proto'),
             loader: {
                 arrays: true
             }
