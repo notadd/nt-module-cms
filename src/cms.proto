@@ -218,10 +218,12 @@ message CreateArticleRequest {
         string sourceUrl = 9;
         repeated CreateInfoKV infoKVs = 10;
     }
-    message CreateInfoKV {
-        int32 key = 1;
-        string value = 2;
-    }
+    
+}
+
+message CreateInfoKV {
+    int32 key = 1;
+    string value = 2;
 }
 
 message UpdateArticleRequest {
@@ -362,6 +364,11 @@ service ClassifyItemService {
 
 message UpdateClassifyItemRequest {
     int32 id = 1;
+    string name = 2;
+    string alias = 3;
+    int32 order = 4;
+    bool required = 5;
+    int32 item = 6;
 }
 
 service PageSortService {
@@ -485,4 +492,199 @@ message OnePage {
     string alias = 2;
     int32 pageSortId = 3;
     repeated ContentInput content = 4;
+}
+
+service CommentService {
+    rpc CreateComment(CreateCommentRequest) returns (StringDataResponse) { }
+    rpc DeleteComment(DeleteCommentRequest) returns (StringDataResponse) { }
+    rpc AuditComment(AuditCommmentRequest) returns (StringDataResponse) { }
+    rpc GetAllComments(GetAllCommentsRequest) returns (GetAllCommentsResponse) { }
+    rpc UpdateComment(UpdateCommentRequest) returns (StringDataResponse) { }
+}
+
+message CreateCommentRequest {
+    string content = 1;
+    int32 artId = 2;
+    int32 userId = 3;
+}
+
+message DeleteCommentRequest {
+    int32 id = 1;
+}
+
+message AuditCommmentRequest {
+    int32 id = 1;
+    int32 op = 2;
+}
+
+message GetAllCommentsRequest {
+    int32 pageNumber = 1;
+    int32 pageSize = 2;
+    string content = 3;
+    string artTitle = 4;
+    int32 artId = 5;
+    string username = 6;
+    string stratIime = 7;
+    string endTime = 8;
+}
+
+message GetAllCommentsResponse {
+    int32 code = 1;
+    string message = 2;
+    int32 total = 3;
+    repeated Comment data = 4;
+    message Comment {
+        int32 id = 1;
+        string content = 2;
+        string time = 3;
+        int32 status = 4;
+        int32 userId = 5;
+        int32 article = 6;
+    }
+}
+
+message UpdateCommentRequest {
+    Comment comment = 1;
+}
+
+service CommentPropertiesService {
+    rpc GetAllCommentProperties(PlaceholderRequest) returns (CommentPropertiesResponse) { }
+    rpc UpdateCommentProperties(UpdateCommentPropertiesRequest) return (StringDataResponse) { }
+}
+
+message CommentPropertiesResponse {
+    int32 code = 1;
+    string message = 2;
+    CommentProperties data = 3;
+    message CommentProperties {
+        int32 id = 1;
+        bool enableComment = 2;
+        bool needAudit = 3;
+        bool enableStar = 4;
+    }
+}
+
+message UpdateCommentPropertiesRequest {
+    int32 id = 1;
+    string name = 2;
+}
+
+service MessageBoardService {
+    rpc CreateMessageBoard(CreateMessageBoardRequest) returns (StringDataResponse) { }
+    rpc UpdateMessageBoard(UpdateMessageBoardRequest) returns (StringDataResponse) { }
+    rpc DeleteMessageBoard(DeleteMessageBoardRequest) returns (StringDataResponse) { }
+    rpc GetAllMessageBoard(GetAllMessageBoardRequest) returns (GetAllMessageBoardResponse) { }
+    rpc GetOneMessageBoard(GetOneMessageBoardRequest) returns (GetOneMessageBoardResponse) { }
+    rpc GetMessageBoardContent(GetMessageBoardContentRequest) returns (GetMessageBoardContentResponse) { }
+}
+
+message CreateMessageBoardRequest {
+    CreateBoardInput board = 1;
+}
+
+message CreateBoardInput {
+    string name = 1;
+    string alias = 2;
+    repeated BoardItemInput boardItem = 3;
+    message BoardItemInput {
+        string name = 1;
+        string alias = 2;
+        bool required = 3;
+        int32 itemId = 4;
+    }
+}
+
+message UpdateMessageBoardRequest {
+    UpdateBoardInput board = 1;
+    message UpdateBoardInput {
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+    }
+}
+
+message DeleteMessageBoardRequest {
+    int32 id = 1;
+}
+
+message GetAllMessageBoardRequest {
+    int32 pageNumber = 1;
+    int32 pageSize = 2;
+}
+
+message GetAllMessageBoardResponse {
+    int32 code = 1;
+    string message = 2;
+    repeated AllBoard data = 3;
+    message AllBoard {
+        string name = 1;
+        string alias = 2;
+        string time = 3;
+        int32 amount = 4;
+    }
+}
+
+message GetOneMessageBoardRequest {
+    int32 id = 1;
+}
+
+message GetOneMessageBoardResponse {
+    int32 code = 1;
+    string message = 2;
+    OneBoard data = 3;
+    message OneBoard {
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+        repeated InfoItemData item = 4;
+    }
+}
+
+message GetMessageBoardContentRequest {
+    int32 id = 1;
+    int32 pageNumber = 2;
+    int32 pageSize = 3;
+}
+
+message GetMessageBoardContentResponse {
+    int32 code = 1;
+    string message = 2;
+    int32 total = 3;
+    repeated MessageBoardContent data= 4;
+    message MessageBoardContent {
+        int32 id = 1;
+        int32 userId = 2;
+        repeated ArtInfos artInfos = 3;
+    }
+}
+
+service LeavewordService {
+    rpc CreateLeaveword(CreateLeavewordRequest) returns (StringDataResponse) { }
+    rpc DeleteLeaveword(DeleteLeavewordRequest) returns (StringDataResponse) { }
+}
+
+message CreateLeavewordRequest {
+    CreateLeavewordInput createLeavewordInput = 1;
+    message CreateLeavewordInput {
+        int32 userId = 1;
+        int32 messageBoardId = 2;
+        repeated CreateInfoKV infoKVs = 3;
+    }
+}
+
+message DeleteLeavewordRequest {
+    int32 id = 1;
+}
+
+service BoardItemService {
+    rpc UpdateBoardItem(UpdateBoardItemRequest) returns (StringDataResponse) { }
+    rpc DeleteBoardItem(DeleteBoardItemRequest) returns (StringDataResponse) { }
+} 
+
+message UpdateBoardItemRequest {
+    int32 id = 1;
+    string name = 2;
+    string alias = 3;
+    int32 item = 4;
+    bool required = 5;
 }
