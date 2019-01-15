@@ -22,10 +22,10 @@ import { PageSortService } from "./pages/services/page-sort.service";
 import { PageService } from "./pages/services/page.service";
 import { PageSortController } from "./pages/controllers/page-sort.controller";
 import { Content } from "./pages/entities/content.entity";
-import { CommentController } from "./plugin/comment/controllers/comment.controller";
-import { CommentService } from "./plugin/comment/services/comment.service";
+import { DiscussController } from "./plugin/comment/controllers/discuss.controller";
+import { DiscussService } from "./plugin/comment/services/discuss.service";
 import { CommentProperties } from "./plugin/comment/entities/comment-properties.entity";
-import { Comment } from "./plugin/comment/entities/comment.entity";
+import {  Discuss } from "./plugin/comment/entities/discuss.entity";
 import { CommentPropertiesController } from "./plugin/comment/controllers/comment-properties.controller";
 import { CommentPropertiesService } from "./plugin/comment/services/comment-properties.service";
 import { MessageBoard } from "./plugin/message-board/entities/message-board.entity";
@@ -42,13 +42,15 @@ import { BoardItemController } from "./plugin/message-board/controllers/board-it
 import { MessageBoardService } from "./plugin/message-board/services/message-board.service";
 import { LeavewordService } from "./plugin/message-board/services/leaveword.service";
 import { BoardItemService } from "./plugin/message-board/services/board-item.service";
+import { Message } from "./articles/entities/message.entity";
+import { UserMessage } from "./articles/entities/user-message.entity";
 
 @Module({
     imports: [
         TypeOrmModule.forRoot({
 
         }),
-        TypeOrmModule.forFeature([Classify, ClassifyItem, Article, ArtInfo, Item, PageSort, Page, Content, Comment, CommentProperties, MessageBoard, Leaveword, BoardItem, LeavewordInfo]),
+        TypeOrmModule.forFeature([Classify, ClassifyItem, Message, UserMessage, Article, ArtInfo, Item, PageSort, Page, Content, Discuss, CommentProperties, MessageBoard, Leaveword, BoardItem, LeavewordInfo]),
     ],
     controllers: [
         ArticleController,
@@ -59,11 +61,11 @@ import { BoardItemService } from "./plugin/message-board/services/board-item.ser
         ItemController,
         PageSortController,
         PageController,
-        CommentController,
+        DiscussController,
         CommentPropertiesController,
         MessageBoardController,
         LeavewordController,
-        BoardItemController,
+        BoardItemController
     ],
     providers: [
         ArticleService,
@@ -75,7 +77,7 @@ import { BoardItemService } from "./plugin/message-board/services/board-item.ser
         ItemService,
         PageSortService,
         PageService,
-        CommentService,
+        DiscussService,
         CommentPropertiesService,
         MessageBoardService,
         LeavewordService,
@@ -108,7 +110,7 @@ export class CmsModule implements OnModuleInit {
     private async createPageSortClassify() {
         const root = await this.psRepository.findOne({ where: { alias: '总分类' } });
         if (!root) {
-            await this.pageSortService.createPageSort({ name: '总分类', alias: '总分类', parent: { id: 0 }, onlyChildrenArt: true });
+            await this.pageSortService.createPageSort({ name: '总分类', alias: '总分类', parent: { id: 0 } });
         }
     }
 

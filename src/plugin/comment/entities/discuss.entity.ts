@@ -2,8 +2,8 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 import * as moment from 'moment';
 import { Article } from "src/articles/entities/article.entity";
 
-@Entity('comment')
-export class Comment {
+@Entity('discuss')
+export class Discuss {
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -30,7 +30,7 @@ export class Comment {
     // 0:待审核,1:审核通过,2: 拒绝
     @Column({
         comment: '评论状态',
-        default: true
+        default: 0
     })
     status: number;
 
@@ -40,7 +40,7 @@ export class Comment {
     })
     userId: number;
 
-    @ManyToOne(type => Article, article => article.comments, { onDelete: 'CASCADE', cascade: true })
+    @ManyToOne(type => Article, article => article.discuss, { onDelete: 'CASCADE', cascade: true })
     article: Article;
 
 }

@@ -1,24 +1,24 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Comment } from "../entities/comment.entity";
+import { Discuss } from "../entities/discuss.entity";
 import { Repository } from "typeorm";
 import { notadd_module_user } from "src/grpc/generated";
 import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
-import { CreateComment } from "../interfaces/comment.interface";
 import * as moment from 'moment';
 import { Article } from "src/articles/entities/article.entity";
 import { RpcException } from "@nestjs/microservices";
 import { UserInfoData } from "src/articles/interfaces/user.interface";
+import { CreateDiscuss } from "../interfaces/discuss.interface";
 
 @Injectable()
-export class CommentService {
+export class DiscussService {
 
     onModuleInit() {
         this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<notadd_module_user.UserService>('UserService');
     }
 
     constructor(
-        @InjectRepository(Comment) private readonly commentRepo: Repository<Comment>,
+        @InjectRepository(Discuss) private readonly commentRepo: Repository<Discuss>,
         @InjectRepository(Article) private readonly artRepo: Repository<Article>,
         @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
     ) { }
@@ -30,7 +30,7 @@ export class CommentService {
      * 
      * @param comment 评论实体
      */
-    async createComment(comment: CreateComment) {
+    async createDiscuss(comment: CreateDiscuss) {
         const time = moment().format('YYYY-MM-DD HH:mm:ss');
         const art = await this.artRepo.findOne(comment.artId);
         if (!art) {
@@ -58,7 +58,7 @@ export class CommentService {
      * 
      * @param id 评论id
      */
-    async deleteComment(id: number) {
+    async deleteDiscuss(id: number) {
         const exist = await this.commentRepo.findOne(id);
         if (!exist) {
             throw new RpcException({ code: 404, message: '该评论不存在!' });
@@ -72,7 +72,7 @@ export class CommentService {
      * @param id 评论id
      * @param op 0:待审核,1:通过,2:拒绝
      */
-    async auditComment(id: number, op: number) {
+    async auditDiscuss(id: number, op: number) {
         const exist = await this.commentRepo.findOne(id);
         if (!exist) {
             throw new RpcException({ code: 404, message: '该评论不存在!' });
@@ -92,7 +92,7 @@ export class CommentService {
      * @param startTime 起始时间
      * @param endTime 截止时间
      */
-    async getAllComments(pageNumber: number, pageSize: number, content: string, artTitle: string, artId: number, username: string, startTime: string, endTime: string) {
+    async getAllDiscusss(pageNumber: number, pageSize: number, content: string, artTitle: string, artId: number, username: string, startTime: string, endTime: string) {
         const sqb = this.commentRepo.createQueryBuilder('comment');
         if (content) {
             sqb.andWhere('comment.content Like :content', { content: `%${content}%` });
@@ -127,7 +127,7 @@ export class CommentService {
         return { data: result[0], total: result[1] };
     }
 
-    async updateComment(comment: Comment) {
+    async updateDiscuss(comment: Discuss) {
         try {
             this.commentRepo.update(comment.id, this.commentRepo.create(comment));
         } catch (error) {
