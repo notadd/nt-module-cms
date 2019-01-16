@@ -4,5 +4,6 @@ export interface classifyItemInput {
     alias: string;
     required: boolean;
     order: number;
-    item: number;
+    itemId: number;
+    classifyId: number;
 }

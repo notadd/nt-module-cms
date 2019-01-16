@@ -7,12 +7,14 @@ import { RpcException } from "@nestjs/microservices";
 import { ArtInfo } from "../entities/art-info.entity";
 import { Item } from "../entities/item.entity";
 import { Article } from "../entities/article.entity";
+import { Classify } from "../entities/classify.entity";
 
 @Injectable()
 export class ClassifyItemService {
     constructor(
         @InjectRepository(ClassifyItem) private readonly ciRepo: Repository<ClassifyItem>,
         @InjectRepository(Item) private readonly itemRepo: Repository<Item>,
+        @InjectRepository(Classify) private readonly claRepo: Repository<Classify>,
         @InjectRepository(ArtInfo) private readonly aiRepo: Repository<ArtInfo>,
         @InjectRepository(Article) private readonly artRepo: Repository<Article>,
     ) { }
@@ -25,23 +27,28 @@ export class ClassifyItemService {
      */
     async updateClassifyItem(classifyItem: classifyItemInput) {
         const exist = await this.ciRepo.findOne(classifyItem.id);
+        const classify = await this.claRepo.findOne(classifyItem.classifyId);
         if (!exist) {
             throw new RpcException({ code: 404, message: '该信息项不存在!' });
         }
+        if(!classify){
+            throw new RpcException({code:404,message:'该文章分类不存在!'});
+        }
         if (classifyItem.alias && classifyItem.alias !== exist.alias) {
-            if (await this.ciRepo.findOne({ where: { alias: classifyItem.alias } })) {
+            if (await this.ciRepo.findOne({ where: { alias: classifyItem.alias ,classify:classify} })) {
                 throw new RpcException({ code: 406, message: '别名重复!' });
             }
         }
-            const item = await this.itemRepo.findOne(classifyItem.item);
-            await this.ciRepo.save(this.ciRepo.create({
-                id: classifyItem.id,
-                name: classifyItem.name,
-                alias: classifyItem.alias,
-                item,
-                order: classifyItem.order,
-                required: classifyItem.required
-            }));
+        const item = await this.itemRepo.findOne(classifyItem.itemId);
+        await this.ciRepo.save(this.ciRepo.create({
+            id: classifyItem.id,
+            name: classifyItem.name,
+            alias: classifyItem.alias,
+            item,
+            order: classifyItem.order,
+            required: classifyItem.required,
+            classify
+        }));
     }
 
     /**
@@ -63,14 +70,6 @@ export class ClassifyItemService {
             .where('Article.id IN(:...ids)',{ids})
             .getMany();
         await this.aiRepo.remove(infos);
-        // wdnmd,这谁顶的住啊.删除文章分类中的信息项时,同时需要删除该文章分类下文章对应的信息项的值.目前没有实现方法,先放着..
-        // const item = await this.itemRepo.findOne(exist.item);
-        // await this.aiRepo.find({
-        //     where: {
-        //         item,
-        //         article
-        //     }
-        // })
     }
 
 }

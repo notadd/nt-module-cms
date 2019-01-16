@@ -46,9 +46,9 @@ export class ArticleController {
     }
 
     @GrpcMethod('ArticleService')
-    async getAllArticle(body: { classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number }) {
-        const data = (await this.artService.getAllArticle(body.classifyId, body.createdAt, body.endTime, body.title, body.username, body.pageNumber, body.pageSize)).exist;
-        const total = (await this.artService.getAllArticle(body.classifyId, body.createdAt, body.endTime, body.title, body.username, body.pageNumber, body.pageSize)).total;
+    async getAllArticle(body: { classifyId: number, createdAt: string, endTime: string, title: string, username: string, top:boolean, pageNumber: number, pageSize: number }) {
+        const data = (await this.artService.getAllArticle(body.classifyId, body.createdAt, body.endTime, body.title, body.username, body.top, body.pageNumber, body.pageSize)).exist;
+        const total = (await this.artService.getAllArticle(body.classifyId, body.createdAt, body.endTime, body.title, body.username, body.top, body.pageNumber, body.pageSize)).total;
         return { code: 200, message: '查询成功', data, total };
     }
 
@@ -67,8 +67,8 @@ export class ArticleController {
 
     @GrpcMethod('ArticleService')
     async getCheckArticle(body: { classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number }) {
-        const data = (await this.artService.getRecycleArticle(body.classifyId, body.createdAt, body.endTime, body.title, body.username, body.pageNumber, body.pageSize)).exist;
-        const total = (await this.artService.getRecycleArticle(body.classifyId, body.createdAt, body.endTime, body.title, body.username, body.pageNumber, body.pageSize)).total;
+        const data = (await this.artService.getCheckArticle(body.classifyId, body.createdAt, body.endTime, body.title, body.username, body.pageNumber, body.pageSize)).exist;
+        const total = (await this.artService.getCheckArticle(body.classifyId, body.createdAt, body.endTime, body.title, body.username, body.pageNumber, body.pageSize)).total;
         return { code: 200, message: '查询成功!', data, total }
     }
 

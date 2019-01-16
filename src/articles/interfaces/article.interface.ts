@@ -8,6 +8,7 @@ export interface inputArticle {
     top: boolean;
     source: string;
     sourceUrl: string;
+    createAt: string;
     infoKVs?: { key: number; value: string }[];
 }
 
@@ -21,6 +22,8 @@ export interface updateArticle {
     content: string;
     top: boolean;
     source: string;
+    modifyAt?:string;
+    status?: number;
     infoKVs?: {
         key: number;
         value: string;
