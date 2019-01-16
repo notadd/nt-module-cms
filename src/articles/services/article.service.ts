@@ -5,13 +5,14 @@ import { Repository, TreeRepository } from "typeorm";
 import { Classify } from "../entities/classify.entity";
 import { inputArticle, updateArticle, artResult } from "../interfaces/article.interface";
 import { RpcException } from "@nestjs/microservices";
-import { MessageEntity } from "../entities/message.entity";
+import { Message } from "../entities/message.entity";
 import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
 import { now } from "moment";
 import { UserInfoData } from "../interfaces/user.interface";
 import { ArtInfo } from "../entities/art-info.entity";
 import { Item } from "../entities/item.entity";
 import { notadd_module_user } from "src/grpc/generated";
+import * as moment from 'moment';
 const _ = require('underscore');
 
 
@@ -25,7 +26,7 @@ export class ArticleService {
     constructor(
         @InjectRepository(Article) private readonly artRepo: Repository<Article>,
         @InjectRepository(Classify) private readonly claRepo: TreeRepository<Classify>,
-        @InjectRepository(MessageEntity) private readonly mesRepo: Repository<MessageEntity>,
+        @InjectRepository(Message) private readonly mesRepo: Repository<Message>,
         @InjectRepository(ArtInfo) private readonly aiRepo: Repository<ArtInfo>,
         @InjectRepository(Item) private readonly itemRepo: Repository<Item>,
         @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
@@ -40,10 +41,22 @@ export class ArticleService {
      */
     async createArticle(art: inputArticle) {
         const classify = await this.claRepo.findOne({ id: art.classifyId })
+        const user = (await this.userService.findUserInfoByIds({ userIds: [art.userId] }).toPromise()).data[0];
         if (!classify) {
             throw new RpcException({ code: 404, message: '该文章分类不存在!' });
         }
-        const exist = await this.artRepo.save(this.artRepo.create(art));
+        const exist = await this.artRepo.save(this.artRepo.create({
+            userId: art.userId,
+            title: art.title,
+            cover: art.cover,
+            abstract: art.abstract,
+            content: art.content,
+            top: art.top,
+            source: art.source,
+            status: user.userRoles.length && user.userRoles[0].id === 1 ? 0 : 1,
+            createdAt: art.createAt,
+            classify
+        }));
         if (art.infoKVs && art.infoKVs.length) {
             await this.createOrUpdateArtInfos(exist, art.infoKVs, 'create');
         }
@@ -73,20 +86,25 @@ export class ArticleService {
      * 
      */
     async updateArticle(art: updateArticle) {
-        const article = await this.artRepo.findOne(art.id, { relations: ['artInfos'] });
-        if (!article) {
-            throw new RpcException({ code: 404, message: '该文章不存在!' });
-        }
-        article.status = 0;
-        await this.artRepo.save(this.artRepo.create(article));
-        if (art.infoKVs && art.infoKVs.length) {
-            await this.createOrUpdateArtInfos(article, art.infoKVs, 'update');
+        try {
+            const article = await this.artRepo.findOne(art.id, { relations: ['artInfos'] });
+            if (!article) {
+                throw new RpcException({ code: 404, message: '该文章不存在!' });
+            }
+            art.status = 0;
+            art.modifyAt = moment().format('YYYY-MM-DD HH:mm:ss');
+            await this.artRepo.save(this.artRepo.create(art));
+            if (art.infoKVs && art.infoKVs.length) {
+                await this.createOrUpdateArtInfos(article, art.infoKVs, 'update');
+            }
+        } catch (error) {
+            throw new RpcException({ code: 500, message: error.toString() });
         }
     }
 
 
     /**
-     * 将文章丢入回收站
+     * 批量将文章丢入回收站
      * 
      * @param ids 文章id数组
      */
@@ -105,7 +123,7 @@ export class ArticleService {
     }
 
     /**
-     * 将文章永久删除
+     * 批量永久删除文章
      * 
      * @param ids 文章id数组
      * 
@@ -126,7 +144,7 @@ export class ArticleService {
 
 
     /**
-     * 恢复回收站中的文章
+     * 批量恢复回收站中的文章
      * 
      * @param ids 文章id数组
      */
@@ -146,7 +164,7 @@ export class ArticleService {
 
 
     /**
-     * 审核文章
+     * 批量审核文章
      * 
      * @param ids 审核文章id数组
      * @param status 审核操作.1:通过  2:拒绝
@@ -170,7 +188,7 @@ export class ArticleService {
                 await this.artRepo.update(ids, { status, refuseReason });
                 for (let i = 0; i < ids.length; i++) {
                     await this.mesRepo.save(this.mesRepo.create({
-                        content: `你的文章《${arts[i].title}》已被拒绝,原因如下:${refuseReason}`,
+                        content: `你的文章《${arts[i].title}》审核未通过,原因如下:${refuseReason}`,
                         owner: arts[i].userId
                     }));
                 }
@@ -180,30 +198,46 @@ export class ArticleService {
         }
     }
 
-    async getAllArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
-        const sqb = this.artRepo.createQueryBuilder('article');
+    /**
+     * 后台搜索所有文章
+     * 
+     * @param classifyId 文章分类id
+     * @param createdAt 开始时间
+     * @param endTime 截止时间
+     * @param title 文章标题
+     * @param username 文章作者账户名
+     * @param top 是否置顶
+     * @param pageNumber 页数
+     * @param pageSize 每页显示数量
+     */
+    async getAllArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, top: boolean, pageNumber: number, pageSize: number) {
+        const sqb = this.artRepo.createQueryBuilder('article').where('article.status = :status', { status: 1 });
         if (classifyId) {
-            sqb.where('article.classify = :classifyId', { classifyId });
+            sqb.andWhere('article.classify = :classifyId', { classifyId });
         }
         if (title) {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
         if (username) {
-            const result  = await this.userService.findOneWithRolesAndPermissions({username}).toPromise();
+            const result = await this.userService.findOneWithRolesAndPermissions({ username }).toPromise();
             const userId = result.data.id;
-            sqb.andWhere('article.userId = :userId',{userId});
+            sqb.andWhere('article.userId = :userId', { userId });
         }
         if (createdAt) {
             const min = new Date(createdAt);
-            const max = endTime ? new Date(endTime) : new Date();
             sqb.andWhere('article.createdAt > :start', { start: min });
+        }
+        if(endTime) {
+            const max = new Date(endTime);
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).getMany();
+        if (top) {
+            sqb.andWhere('article.top = :top', { top });
+        }
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).getManyAndCount();
         const exist: artResult[] = [];
-        const total = await sqb.getCount();
-        for (const i of result) {
-            const data = await this.userService.findUserInfoByIds({userIds:[i.userId]}).toPromise();
+        for (const i of result[0]) {
+            const data = await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
             const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,
@@ -215,14 +249,19 @@ export class ArticleService {
                 content: i.content,
                 top: i.top,
                 source: i.source,
+                createAt: i.createdAt,
                 userId: data.data[0].id,
                 userName: data.data[0].username
             }
             exist.push(a);
         }
-        return { exist, total };
+        return { exist, total: result[1] };
     }
 
+    /**
+     * 搜索回收站中文章
+     * 
+     */
     async getRecycleArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article').where('article.recycling = :recycling', { recycling: true });
         if (classifyId) {
@@ -232,9 +271,9 @@ export class ArticleService {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
         if (username) {
-            const result  = await this.userService.findOneWithRolesAndPermissions({username}).toPromise();
+            const result = await this.userService.findOneWithRolesAndPermissions({ username }).toPromise();
             const userId = result.data.id;
-            sqb.andWhere('article.userId = :userId',{userId});
+            sqb.andWhere('article.userId = :userId', { userId });
         }
         if (createdAt) {
             const min = new Date(createdAt);
@@ -246,7 +285,7 @@ export class ArticleService {
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
-            const user = await this.userService.findUserInfoByIds({userIds:[i.userId]}).toPromise();
+            const user = await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
             const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,
@@ -258,6 +297,7 @@ export class ArticleService {
                 content: i.content,
                 top: i.top,
                 source: i.source,
+                createAt: i.createdAt,
                 userId: user.data[0].id,
                 userName: user.data[0].username
             }
@@ -266,6 +306,12 @@ export class ArticleService {
         return { exist, total };
     }
 
+
+    /**
+     * 获取文章详情
+     * 
+     * @param id 文章id
+     */
     async getArticleById(id: number) {
         const artQb = this.artRepo.createQueryBuilder('art')
             .leftJoinAndSelect('art.artInfos', 'artInfos')
@@ -310,6 +356,11 @@ export class ArticleService {
         return artInfoData;
     }
 
+    /**
+     * 
+     * 搜索获取待审核文章
+     * 
+     */
     async getCheckArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article')
             .where('article.recycling = :recycling', { recycling: false })
@@ -321,9 +372,9 @@ export class ArticleService {
             sqb.andWhere('article.title Like :title', { title: `%${title}%` });
         }
         if (username) {
-            const result  = await this.userService.findOneWithRolesAndPermissions({username}).toPromise();
+            const result = await this.userService.findOneWithRolesAndPermissions({ username }).toPromise();
             const userId = result.data.id;
-            sqb.andWhere('article.userId = :userId',{userId});
+            sqb.andWhere('article.userId = :userId', { userId });
         }
         if (createdAt) {
             const min = new Date(createdAt);
@@ -335,7 +386,7 @@ export class ArticleService {
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
-            const user = <UserInfoData>await this.userService.findUserInfoByIds({userIds:[i.userId]}).toPromise();
+            const user = <UserInfoData>await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
             const classify = await this.claRepo.findOne({ where: { id: i.classify } });
             const a = {
                 id: i.id,

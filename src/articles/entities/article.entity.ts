@@ -2,7 +2,7 @@ import { Column, JoinColumn, CreateDateColumn, Entity, ManyToOne, PrimaryGenerat
 import * as moment from 'moment';
 import { Classify } from './classify.entity';
 import { ArtInfo } from './art-info.entity';
-import { Comment } from 'src/plugin/comment/entities/comment.entity';
+import { Discuss } from 'src/plugin/comment/entities/discuss.entity';
 @Entity('article')
 export class Article {
     /*文章Id*/
@@ -107,6 +107,22 @@ export class Article {
     })
     createdAt: string;
 
+    /*修改时间*/
+    @Column({
+        nullable: true,
+        default: () => 'NOW ()',
+        transformer: {
+            from: (date) => {
+                return moment(date).format('YYYY-MM-DD HH:mm:ss');
+            },
+            to: (date) => {
+                date = date ? date : new Date();
+                return moment(date).format('YYYY-MM-DD HH:mm:ss');
+            }
+        }
+    })
+    modifyAt: string;
+
     /*分类Id*/
     @ManyToOne(type => Classify, classify => classify.articles, { onDelete: 'CASCADE', cascade: true })
     @JoinColumn({
@@ -118,8 +134,8 @@ export class Article {
     @OneToMany(type => ArtInfo, artInfo => artInfo.article)
     artInfos: ArtInfo[];
 
-    @OneToMany(type=>Comment,comment=>comment.article)
-    comments: Comment[];
+    @OneToMany(type=>Discuss,discuss=>discuss.article)
+    discuss: Discuss[];
 
 }
 

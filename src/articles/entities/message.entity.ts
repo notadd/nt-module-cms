@@ -2,7 +2,7 @@ import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn} from 'typeorm'
 const moment = require('moment');
 
 @Entity('message')
-export class MessageEntity {
+export class Message {
 
     @PrimaryGeneratedColumn()
     id: number;

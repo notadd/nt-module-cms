@@ -2,14 +2,14 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from '@nestjs/typeorm';
 import { TreeRepository, Repository, In } from "typeorm";
 import { RpcException } from "@nestjs/microservices";
-import { MessageEntity } from "../entities/message.entity";
+import { Message } from "../entities/message.entity";
 import { UserMessage } from "../entities/user-message.entity";
 
 
 @Injectable()
 export class MessageService {
     constructor(
-        @InjectRepository(MessageEntity) private readonly mesRepo: Repository<MessageEntity>,
+        @InjectRepository(Message) private readonly mesRepo: Repository<Message>,
         @InjectRepository(UserMessage) private readonly umesRepo: Repository<UserMessage>,
     ) { }
 
@@ -68,7 +68,7 @@ export class MessageService {
                 .getManyAndCount();
             return { data: exist[0], total: exist[1] };
         } catch (err) {
-            throw new RpcException({code:400,message:err.toString()});
+            throw new RpcException({ code: 400, message: err.toString() });
         }
     }
 
@@ -81,7 +81,7 @@ export class MessageService {
      * @param endTime 截止时间
      * @param id 用户id
      */
-    async getMessageByUserId(pageNumber: number, pageSize: number, startTime: string, endTime: string,id:number){
+    async getMessageByUserId(pageNumber: number, pageSize: number, startTime: string, endTime: string, id: number) {
         const s = [];
         s.push(id);
         const exist = await this.mesRepo.createQueryBuilder('message')

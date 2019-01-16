@@ -26,7 +26,7 @@ export class ClassifyService {
         try {
             const ignore = await this.claRepository.count();
             if (!classify.parent.id || ignore <= 0) {
-                await this.claRepository.save(this.claRepository.create({name:'总分类',alias:'总分类',onlyChildrenArt:true}));
+                await this.claRepository.save(this.claRepository.create({ name: '总分类', alias: '总分类', onlyChildrenArt: true }));
                 return { code: 200, message: '创建成功' };
             }
             if (classify.parent) {
@@ -40,9 +40,8 @@ export class ClassifyService {
             if (result) {
                 throw new RpcException({ code: 406, message: '别名重复!' });
             }
-            await this.claRepository.save(await this.claRepository.create(classify));
-            const exist = await this.claRepository.findOne({where:{alias:classify.alias}});
-            if(classify.classifyItem){
+            const exist = await this.claRepository.save(await this.claRepository.create(classify));
+            if (classify.classifyItem) {
                 for (const i of classify.classifyItem) {
                     await this.ciRepository.save(this.ciRepository.create({
                         name: i.name,
@@ -54,9 +53,9 @@ export class ClassifyService {
                     }));
                 }
             }
-                
+
         } catch (err) {
-            throw new RpcException(err);
+            throw new RpcException({ code: 500, message: err.toString() });
         }
     }
 
@@ -71,11 +70,13 @@ export class ClassifyService {
             return { code: 404, message: '当前分类不存在' };
         }
         const array = await this.getAllClassifyIds(id);
+        console.log(array);
         const articles = await this.artRepository.count({ where: { classifyId: In(array) } });
         if (articles > 0) {
             throw new RpcException({ code: 403, message: '当前分类下有文章,不能删除' })
         }
         array.splice(array.indexOf(id), 1);
+        console.log(array);
         if (array.length) {
             throw new RpcException({ code: 403, message: '当前分类下有子分类,不能删除' });
         }
@@ -123,7 +124,7 @@ export class ClassifyService {
         try {
             await this.claRepository.save(await this.claRepository.create(classify));
         } catch (err) {
-            throw new RpcException({ code: 405, message: err.toString });
+            throw new RpcException({ code: 500, message: err.toString() });
         }
     }
 
@@ -160,7 +161,7 @@ export class ClassifyService {
         const data1 = await this.claRepository.findDescendantsTree(exist);
         const data2 = await this.claRepository.createQueryBuilder('classify').relation(Classify, 'classifyItems').of(id).loadMany();
         const data = {
-            id : data1.id,
+            id: data1.id,
             name: data1.name,
             alias: data1.alias,
             children: data1.children,
@@ -211,10 +212,10 @@ export class ClassifyService {
         try {
             // 修改文章分类
             for (const i of ids) {
-                 await this.artRepository.update(i.id, { classify: newClassify });
+                await this.artRepository.update(i.id, { classify: newClassify });
             }
         } catch (err) {
-            throw new RpcException({ code: 405, message: err.toString });
+            throw new RpcException({ code: 500, message: err.toString() });
         }
     }
 
