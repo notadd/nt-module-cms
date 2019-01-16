@@ -6,6 +6,7 @@ import { RpcException } from "@nestjs/microservices";
 import { Content } from "../entities/content.entity";
 import * as moment from 'moment';
 import { PageSort } from "../entities/page-sort.entity";
+import { pageInput } from "../interfaces/page.interface";
 
 @Injectable()
 export class PageService {
@@ -15,20 +16,30 @@ export class PageService {
         @InjectRepository(Content) private readonly contentRepo: Repository<Content>,
     ) { }
 
-    async createPage(page: Page) {
-        const exist = await this.pageRepo.findOne({ where: { alias: page.alias } });
+    async createPage(page: pageInput) {
+        const ps = await this.psRepo.findOne(page.pageSortId);
+        if (!ps) {
+            throw new RpcException({ code: 404, message: '该页面分类不存在!' });
+        }
+        const exist = await this.pageRepo.findOne({ where: { alias: page.alias, pageSort: page.pageSortId } });
         if (exist) {
             throw new RpcException({ code: 406, message: '别名重复!' });
         }
-        const contents = await this.contentRepo.create(page.contents);
         const time = moment().format('YYYY-MM-DD HH:mm:ss');
-        await this.pageRepo.save({
+        const result = await this.pageRepo.save(this.pageRepo.create({
             name: page.name,
             alias: page.alias,
             lastUpdateTime: time,
-            contents,
-            pageSort: page.pageSort
-        })
+            pageSort: ps
+        }));
+        for (const i of page.contents) {
+            await this.contentRepo.save(this.contentRepo.create({
+                name: i.name,
+                alias: i.alias,
+                value: i.value,
+                page: result
+            }));
+        }
     }
 
     async updatePage(page: Page) {
@@ -39,7 +50,7 @@ export class PageService {
         }
         exist.pageSort = pageSort;
         if (page.alias && page.alias !== exist.alias) {
-            if (await this.pageRepo.findOne({ where: { alias: page.alias } })) {
+            if (await this.pageRepo.findOne({ where: { alias: page.alias, pageSort: page.pageSort } })) {
                 throw new RpcException({ code: 406, message: '页面别名重复!' });
             }
         }
@@ -69,7 +80,7 @@ export class PageService {
     }
 
     async getOnePage(id: number) {
-        return await this.pageRepo.findOne(id,{relations:['contents']});
+        return await this.pageRepo.findOne(id, { relations: ['contents'] });
     }
 
 }

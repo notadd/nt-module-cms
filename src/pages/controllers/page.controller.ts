@@ -2,6 +2,7 @@ import { Controller, Inject } from "@nestjs/common";
 import { Page } from "../entities/page.entity";
 import { GrpcMethod } from "@nestjs/microservices";
 import { PageService } from "../services/page.service";
+import { pageInput } from "../interfaces/page.interface";
 
 @Controller()
 export class PageController {
@@ -10,7 +11,7 @@ export class PageController {
     ) { }
 
     @GrpcMethod('PageService')
-    async createPage(body: { page: Page }) {
+    async createPage(body: { page: pageInput }) {
         await this.pageService.createPage(body.page);
         return { code: 200, message: '创建页面成功!' };
     }

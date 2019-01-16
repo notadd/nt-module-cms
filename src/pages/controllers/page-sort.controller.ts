@@ -2,6 +2,7 @@ import { Controller, Inject } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
 import { PageSort } from "../entities/page-sort.entity";
 import { PageSortService } from "../services/page-sort.service";
+import { CreatePageSort } from "../interfaces/page-sort.interface";
 
 @Controller()
 export class PageSortController {
@@ -10,7 +11,7 @@ export class PageSortController {
     ) { }
 
     @GrpcMethod('PageSortService')
-    async createPageSort(body: { pageSort: PageSort }) {
+    async createPageSort(body: { pageSort: CreatePageSort }) {
         await this.psService.createPageSort(body.pageSort);
         return { code: 200, message: '创建页面分类成功!' };
     }

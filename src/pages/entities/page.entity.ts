@@ -25,10 +25,10 @@ export class Page {
     })
     lastUpdateTime: string;
 
-    @OneToMany(type=>Content,content=>content.page)
+    @OneToMany(type => Content, content => content.page, { cascade: ['insert', 'update'] })
     contents: Content[];
 
-    @ManyToOne(type => PageSort,pageSort=>pageSort.pages)
+    @ManyToOne(type => PageSort, pageSort => pageSort.pages)
     pageSort: PageSort;
 
 }
