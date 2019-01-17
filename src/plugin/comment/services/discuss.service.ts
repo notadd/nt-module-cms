@@ -18,7 +18,7 @@ export class DiscussService {
     }
 
     constructor(
-        @InjectRepository(Discuss) private readonly commentRepo: Repository<Discuss>,
+        @InjectRepository(Discuss) private readonly discussRepo: Repository<Discuss>,
         @InjectRepository(Article) private readonly artRepo: Repository<Article>,
         @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
     ) { }
@@ -30,19 +30,22 @@ export class DiscussService {
      * 
      * @param comment 评论实体
      */
-    async createDiscuss(comment: CreateDiscuss) {
+    async createDiscuss(discuss: CreateDiscuss) {
         const time = moment().format('YYYY-MM-DD HH:mm:ss');
-        const art = await this.artRepo.findOne(comment.artId);
+        const art = await this.artRepo.findOne(discuss.artId);
         if (!art) {
             throw new RpcException({ code: 404, message: '该文章不存在!' });
         }
-        const user = (await this.userService.findUserInfoByIds({ userIds: [comment.userId] }).toPromise()).data[0];
+        const user = (await this.userService.findUserInfoByIds({ userIds: [discuss.userId] }).toPromise()).data[0];
+        if(!user || user.recycle){
+            throw new RpcException({ code: 403, message: '该用户不存在!' });
+        }
         if (user.banned === true) {
             throw new RpcException({ code: 403, message: '您的账户已被封禁,请联系管理员!' });
         }
         try {
-            await this.commentRepo.save({
-                content: comment.content,
+            await this.discussRepo.save({
+                content: discuss.content,
                 time,
                 status: 0,
                 userId: user.id,
