@@ -6,14 +6,14 @@ import { LeavewordInfo } from "../entities/leaveword-info.entity";
 import { CreateLeavewordInput } from "../interfaces/leaveword.interface";
 import { MessageBoard } from "../entities/message-board.entity";
 import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
-import { notadd_module_user } from "src/grpc/generated";
+import { nt_module_user } from "src/grpc/generated";
 import { RpcException } from "@nestjs/microservices";
 
 @Injectable()
 export class LeavewordService {
 
     onModuleInit() {
-        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<notadd_module_user.UserService>('UserService');
+        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<nt_module_user.UserService>('UserService');
     }
 
 
@@ -24,7 +24,7 @@ export class LeavewordService {
         @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
     ) { }
 
-    private userService: notadd_module_user.UserService;
+    private userService: nt_module_user.UserService;
 
     async createLeaveword(createLeaveword: CreateLeavewordInput) {
         const user = (await this.userService.findUserInfoByIds({ userIds: [createLeaveword.userId] }).toPromise()).data[0];

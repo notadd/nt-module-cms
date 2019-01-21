@@ -8,9 +8,9 @@ async function bootstrap() {
     const app = await NestFactory.createMicroservice(CmsModule, {
         transport: Transport.GRPC,
         options: {
-            url: 'localhost:50050',
-            package: 'notadd_module_cms',
-            protoPath: join(__dirname, 'cms.proto'),
+            url: 'localhost:50052',
+            package: 'nt_module_cms',
+            protoPath: join(__dirname, 'nt_module_cms.proto'),
             loader: {
                 arrays: true
             }

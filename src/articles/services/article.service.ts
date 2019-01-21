@@ -11,7 +11,7 @@ import { now } from "moment";
 import { UserInfoData } from "../interfaces/user.interface";
 import { ArtInfo } from "../entities/art-info.entity";
 import { Item } from "../entities/item.entity";
-import { notadd_module_user } from "src/grpc/generated";
+import { nt_module_user } from "src/grpc/generated";
 import * as moment from 'moment';
 const _ = require('underscore');
 
@@ -20,7 +20,7 @@ const _ = require('underscore');
 export class ArticleService {
 
     onModuleInit() {
-        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<notadd_module_user.UserService>('UserService');
+        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<nt_module_user.UserService>('UserService');
     }
 
     constructor(
@@ -32,7 +32,7 @@ export class ArticleService {
         @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
     ) { }
 
-    private userService: notadd_module_user.UserService;
+    private userService: nt_module_user.UserService;
 
     /**
      * 创建文章
@@ -62,18 +62,18 @@ export class ArticleService {
         }
     }
 
-    private async createOrUpdateArtInfos(art: Article, infoKVs: { key: number, value: string, relationId?: number }[], action: 'create' | 'update') {
+    private async createOrUpdateArtInfos(art: Article, infoKVs: { artInfoId: number, artInfoValue: string, infoItemId?: number }[], action: 'create' | 'update') {
         if (infoKVs.length) {
             if (action === 'create') {
                 infoKVs.forEach(async infoKV => {
-                    await this.aiRepo.save(this.aiRepo.create({ value: infoKV.value, article: art, item: { id: infoKV.key } }));
+                    await this.aiRepo.save(this.aiRepo.create({ value: infoKV.artInfoValue, article: art, item: { id: infoKV.artInfoId } }));
                 });
             }
             infoKVs.forEach(async infoKV => {
-                if (infoKV.key) {
-                    this.aiRepo.update(infoKV.key, { value: infoKV.value });
+                if (infoKV.artInfoId) {
+                    this.aiRepo.update(infoKV.artInfoId, { value: infoKV.artInfoValue });
                 } else {
-                    await this.aiRepo.save(this.aiRepo.create({ value: infoKV.value, article: art, item: { id: infoKV.relationId } }));
+                    await this.aiRepo.save(this.aiRepo.create({ value: infoKV.artInfoValue, article: art, item: { id: infoKV.infoItemId } }));
                 }
             });
         }
@@ -170,22 +170,23 @@ export class ArticleService {
      * @param status 审核操作.1:通过  2:拒绝
      * @param refuseReason 拒绝原因(拒绝文章时需输入)
      */
-    async auditArticle(ids: number[], status: number, refuseReason: string) {
+    async auditArticle(ids: number[], op: number, refuseReason: string) {
         const articles: number[] = [];
         const arts = await this.artRepo.findByIds(ids);
         arts.forEach((key, value) => {
             articles.push(key.id);
         })
         const noExist = _.difference(ids, articles);
+        console.log(ids, op);
         if (noExist.length > 0) {
             throw new RpcException({ code: 404, message: `id为${noExist}的文章不存在` });
         }
-        switch (status) {
+        switch (op) {
             case 1:
-                await this.artRepo.update(ids, { status });
+                await this.artRepo.update(ids, { status: op });
                 break;
             case 2:
-                await this.artRepo.update(ids, { status, refuseReason });
+                await this.artRepo.update(ids, { status: op, refuseReason });
                 for (let i = 0; i < ids.length; i++) {
                     await this.mesRepo.save(this.mesRepo.create({
                         content: `你的文章《${arts[i].title}》审核未通过,原因如下:${refuseReason}`,
@@ -211,7 +212,11 @@ export class ArticleService {
      * @param pageSize 每页显示数量
      */
     async getAllArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, top: boolean, pageNumber: number, pageSize: number) {
-        const sqb = this.artRepo.createQueryBuilder('article').where('article.status = :status', { status: 1 });
+        const sqb = this.artRepo.createQueryBuilder('article')
+            .where('article.status = :status', { status: 1 })
+            .leftJoinAndSelect('article.classify','classify')
+            .leftJoinAndSelect('article.artInfos','artInfos')
+            .leftJoinAndSelect('article.discuss','discuss');
         if (classifyId) {
             sqb.andWhere('article.classify = :classifyId', { classifyId });
         }
@@ -227,22 +232,22 @@ export class ArticleService {
             const min = new Date(createdAt);
             sqb.andWhere('article.createdAt > :start', { start: min });
         }
-        if(endTime) {
+        if (endTime) {
             const max = new Date(endTime);
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
         if (top) {
             sqb.andWhere('article.top = :top', { top });
         }
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).getManyAndCount();
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({'article.modifyAt':'DESC'}).getManyAndCount();
         const exist: artResult[] = [];
         for (const i of result[0]) {
             const data = await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
-            const classify = await this.claRepo.findOne({ where: { id: i.classify } });
+            const classify = await this.claRepo.findOne(i.classify);
             const a = {
                 id: i.id,
                 title: i.title,
-                classifyName: classify.name,
+                classify,
                 sourceUrl: i.sourceUrl,
                 cover: i.cover,
                 abstract: i.abstract,
@@ -251,7 +256,12 @@ export class ArticleService {
                 source: i.source,
                 createAt: i.createdAt,
                 userId: data.data[0].id,
-                userName: data.data[0].username
+                username: data.data[0].username,
+                status: i.status,
+                recycling: i.recycling,
+                createdAt: i.createdAt,
+                artInfos: i.artInfos,
+                discuss: i.discuss
             }
             exist.push(a);
         }
@@ -285,12 +295,12 @@ export class ArticleService {
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
-            const user = await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
-            const classify = await this.claRepo.findOne({ where: { id: i.classify } });
+            const data = await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
+            const classify = await this.claRepo.findOne(i.classify);
             const a = {
                 id: i.id,
                 title: i.title,
-                classifyName: classify.name,
+                classify,
                 sourceUrl: i.sourceUrl,
                 cover: i.cover,
                 abstract: i.abstract,
@@ -298,8 +308,11 @@ export class ArticleService {
                 top: i.top,
                 source: i.source,
                 createAt: i.createdAt,
-                userId: user.data[0].id,
-                userName: user.data[0].username
+                userId: data.data[0].id,
+                username: data.data[0].username,
+                status: i.status,
+                recycling: i.recycling,
+                createdAt: i.createdAt,
             }
             exist.push(a);
         }
@@ -386,20 +399,24 @@ export class ArticleService {
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
-            const user = <UserInfoData>await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
-            const classify = await this.claRepo.findOne({ where: { id: i.classify } });
+            const data = await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
+            const classify = await this.claRepo.findOne(i.classify);
             const a = {
                 id: i.id,
                 title: i.title,
-                classifyName: classify.name,
+                classify,
                 sourceUrl: i.sourceUrl,
                 cover: i.cover,
                 abstract: i.abstract,
                 content: i.content,
                 top: i.top,
                 source: i.source,
-                userId: user.id,
-                userName: user.username
+                createAt: i.createdAt,
+                userId: data.data[0].id,
+                username: data.data[0].username,
+                status: i.status,
+                recycling: i.recycling,
+                createdAt: i.createdAt,
             }
             exist.push(a);
         }

@@ -5,7 +5,7 @@ import { Repository } from "typeorm";
 import { Leaveword } from "../entities/leaveword.entity";
 import { Item } from "src/articles/entities/item.entity";
 import { LeavewordInfo } from "../entities/leaveword-info.entity";
-import { notadd_module_user } from "src/grpc/generated";
+import { nt_module_user } from "src/grpc/generated";
 import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
 import { CreateBoardInput, UpdateBoardInput } from "../interfaces/message-board.interface";
 import { RpcException } from "@nestjs/microservices";
@@ -15,7 +15,7 @@ import { BoardItem } from "../entities/board-item.entity";
 export class MessageBoardService {
 
     onModuleInit() {
-        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<notadd_module_user.UserService>('UserService');
+        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<nt_module_user.UserService>('UserService');
     }
 
 
@@ -28,7 +28,7 @@ export class MessageBoardService {
         @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
     ) { }
 
-    private userService: notadd_module_user.UserService;
+    private userService: nt_module_user.UserService;
 
     async createMessageBoard(messageBoard: CreateBoardInput) {
         try {

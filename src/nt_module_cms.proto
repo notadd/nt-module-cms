@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package notadd_module_cms;
+package nt_module_cms;
 
 message PlaceholderRequest { }
 
@@ -21,11 +21,14 @@ service ClassifyService {
 }
 
 message CreateClassifyRequest {
-    string name = 1;
-    string alias = 2;
-    UpdateClassify parent = 3;
-    bool onlyChildrenArt = 4;
-    repeated ClassifyItemInput = 5;
+    CreateClassifyInput classify = 1;
+    message CreateClassifyInput {
+        string name = 1;
+        string alias = 2;
+        UpdateClassify parent = 3;
+        bool onlyChildrenArt = 4;
+        repeated ClassifyItemInput classifyItem = 5;
+    }
 }
 
 message ClassifyItemInput {
@@ -38,9 +41,6 @@ message ClassifyItemInput {
 
 message UpdateClassify {
     int32 id = 1;
-    string name = 2;
-    string chainUrl = 3;
-    UpdateClassify parent = 4;
 }
 
 message CmsResponse {
@@ -53,11 +53,14 @@ message DelClassifyRequest {
 }
 
 message UpdateClassifyRequest {
-    int32 id = 1;
-    string name = 2;
-    string alias = 3;
-    bool onlyChildrenArt = 4;
-    UpdateClassify parent = 5;
+    UpdateClassifyInput classify = 1;
+    message UpdateClassifyInput {
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+        bool onlyChildrenArt = 4;
+        UpdateClassify parent = 5;
+    }
 }
 
 message FindAllClassifyRequest {
@@ -73,7 +76,7 @@ message FindAllClassifyResponse {
 message FindOneClassifyResponse {
     int32 code = 1;
     string message = 2;
-    ClassifyData data = 3; 
+    string data = 3; 
 }
 
 message ClassifyData {
@@ -81,9 +84,6 @@ message ClassifyData {
     string name = 2;
     string alias = 3;
     bool onlyChildrenArt = 4;
-    repeated ClassifyData children = 5;
-    ClassifyData parent = 6;
-    repeated InfoItemData classifyItem = 7;
 }
 
 message InfoItemData {
@@ -222,23 +222,30 @@ message CreateArticleRequest {
 }
 
 message CreateInfoKV {
-    int32 key = 1;
-    string value = 2;
+    int32 artInfoId = 1;
+    string artInfoValue = 2;
 }
 
 message UpdateArticleRequest {
-    int32 id = 1;
-    UpdateArtInput updateArtInput = 2;
+    UpdateArtInput updateArtInput = 1;
     message UpdateArtInput {
-        string title = 1;
-        int32 classifyId = 2;
-        string sourceUrl = 3;
-        string cover = 4;
-        string abstract = 5;
-        string content = 6;
-        bool top = 7;
-        string source = 8;
+        int32 id = 1;
+        string title = 2;
+        int32 classifyId = 3;
+        string sourceUrl = 4;
+        string cover = 5;
+        string abstract = 6;
+        string content = 7;
+        bool top = 8;
+        string source = 9;
+        repeated UpdateInfoKV infoKVs = 10;
     }
+}
+
+message UpdateInfoKV {
+    int32 artInfoId = 1;
+    string artInfoValue = 2;
+    int32 infoItemId = 3;
 }
 
 message RecycleArticleRequest {
@@ -255,7 +262,7 @@ message RecoverArticleRequest {
 
 message AuditArticleRequest {
     repeated int32 ids = 1;
-    int32 status = 2;
+    int32 op = 2;
     string refuseReason = 3;
 }
 
@@ -270,15 +277,15 @@ message GetAllArticleRequest {
 message AllArticleResponse {
     int32 code = 1;
     string message = 2;
-    repeated ArtData data = 3;
-    int32 total = 4;
+    int32 total = 3;
+    repeated ArtData data = 4;
 }
 
 message ArtData {
     int32 id = 1;
     string title = 2;
     string source = 3;
-    int32 classifyId = 4;
+    ClassifyData classify = 4;
     string sourceUrl = 5;
     bool top = 6;
     int32 views = 7;
@@ -292,6 +299,7 @@ message ArtData {
     int32 userId = 15;
     string username = 16;
     repeated ArtInfos artInfos = 17;
+    string modifyAt = 18;
 }
 
 message ArtInfos {
@@ -313,7 +321,9 @@ message GetArticleByIdRequest {
 }
 
 message ArticleResponse {
-    ArtData article = 1;
+    int32 code = 1;
+    string message = 2;
+    ArtData article = 3;
 }
 
 message GetCheckArticleRequest {
@@ -358,17 +368,34 @@ message DeleteItemRequest {
 }
 
 service ClassifyItemService {
+    rpc CreateClassifyItem(CreateClassifyItemRequest) returns (StringDataResponse) { }
     rpc UpdateClassifyItem(UpdateClassifyItemRequest) returns (StringDataResponse) { }
-    rpc DeleteClassifyItem(UpdateClassifyItemRequest) returns (StringDataResponse) { }
+    rpc DeleteClassifyItem(DeleteItemRequest) returns (StringDataResponse) { }
 }
 
 message UpdateClassifyItemRequest {
-    int32 id = 1;
-    string name = 2;
-    string alias = 3;
-    int32 order = 4;
-    bool required = 5;
-    int32 item = 6;
+    UpdateClassifyItemInput classifyItem = 1;
+    message UpdateClassifyItemInput {
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+        int32 order = 4;
+        bool required = 5;
+        int32 itemId = 6;
+        int32 classifyId = 7;
+    }
+}
+
+message CreateClassifyItemRequest {
+    CreateClassifyItemInput classifyItem = 1;
+    message CreateClassifyItemInput {
+        string name = 1;
+        string alias = 2;
+        int32 order = 3;
+        bool required = 4;
+        int32 itemId = 5;
+        int32 classifyId = 6;
+    }
 }
 
 service PageSortService {
@@ -390,16 +417,16 @@ message CreatePageSortRequest {
 
 message UpdatePageSort {
     int32 id = 1;
-    string name = 2;
-    string chainUrl = 3;
-    UpdateClassify parent = 4;
 }
 
 message UpdatePageSortRequest {
-    int32 id = 1;
-    string name = 2;
-    string alias = 3;
-    UpdatePageSort parent = 4;
+    UpdatePageSortInput updatePageSortInput = 1;
+    message UpdatePageSortInput {
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+        UpdatePageSort parent = 4;
+    }
 }
 
 message DeletePageSortRequest {
@@ -414,8 +441,7 @@ message GetAllPageSortRequest {
 message GetAllPageSortResponse {
     int32 code = 1;
     string message = 2;
-    repeated PageSort data = 3;
-    int32 total = 4;
+    string data = 3;
 }
 
 message PageSort {
@@ -433,7 +459,7 @@ message GetOnePageSortRequest {
 message GetOnePageSortResponse {
     int32 code = 1;
     string message = 2;
-    PageSort parent = 3;
+    PageSort data = 3;
 }
 
 service PageService {
@@ -445,10 +471,13 @@ service PageService {
 }
 
 message CreatePageRequest {
-    string name = 1;
-    string alias = 2;
-    int32 pageSortId = 3;
-    repeated ContentInput content = 4;
+    CreatePageInput page = 1;
+    message CreatePageInput {
+        string name = 1;
+        string alias = 2;
+        int32 pageSortId = 3;
+        repeated ContentInput content = 4;
+    }
 }
 
 message ContentInput {
@@ -458,11 +487,14 @@ message ContentInput {
 }
 
 message UpdatePageRequest {
-    int32 id = 1;
-    string name = 2;
-    string alias = 3;
-    repeated ContentInput content = 4;
-    int32 pageSortId = 5;
+    UpdatePageInput page = 1;
+    message UpdatePageInput {
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+        repeated ContentInput content = 4;
+        int32 pageSortId = 5;
+    }
 }
 
 message DeletePageRequest {
@@ -494,21 +526,25 @@ message OnePage {
     repeated ContentInput content = 4;
 }
 
-service CommentService {
-    rpc CreateComment(CreateCommentRequest) returns (StringDataResponse) { }
-    rpc DeleteComment(DeleteCommentRequest) returns (StringDataResponse) { }
-    rpc AuditComment(AuditCommmentRequest) returns (StringDataResponse) { }
-    rpc GetAllComments(GetAllCommentsRequest) returns (GetAllCommentsResponse) { }
-    rpc UpdateComment(UpdateCommentRequest) returns (StringDataResponse) { }
+service DiscussService {
+    rpc CreateDiscuss(CreateDiscussRequest) returns (StringDataResponse) { }
+    rpc DeleteDiscuss(DeleteDiscussRequest) returns (StringDataResponse) { }
+    rpc AuditDiscuss(AuditCommmentRequest) returns (StringDataResponse) { }
+    rpc GetAllDiscusss(GetAllDiscusssRequest) returns (GetAllDiscusssResponse) { }
+    rpc UpdateDiscuss(UpdateDiscussRequest) returns (StringDataResponse) { }
+    rpc GetOneDiscuss(GetOneDiscussRequest) returns (GetOneDiscussResponse) { }
 }
 
-message CreateCommentRequest {
-    string content = 1;
-    int32 artId = 2;
-    int32 userId = 3;
+message CreateDiscussRequest {
+    CreateDiscussInput discuss = 1;
+    message CreateDiscussInput {
+        string content = 1;
+        int32 artId = 2;
+        int32 userId = 3;
+    }
 }
 
-message DeleteCommentRequest {
+message DeleteDiscussRequest {
     int32 id = 1;
 }
 
@@ -517,7 +553,7 @@ message AuditCommmentRequest {
     int32 op = 2;
 }
 
-message GetAllCommentsRequest {
+message GetAllDiscusssRequest {
     int32 pageNumber = 1;
     int32 pageSize = 2;
     string content = 3;
@@ -528,12 +564,31 @@ message GetAllCommentsRequest {
     string endTime = 8;
 }
 
-message GetAllCommentsResponse {
+message GetAllDiscusssResponse {
     int32 code = 1;
     string message = 2;
     int32 total = 3;
-    repeated Comment data = 4;
-    message Comment {
+    repeated Discuss data = 4;   
+}
+
+message GetOneDiscussResponse {
+    int32 code = 1;
+    string message = 2;
+    Discuss data = 3;
+}
+
+message Discuss {
+    int32 id = 1;
+    string content = 2;
+    string time = 3;
+    int32 status = 4;
+    int32 userId = 5;
+    int32 article = 6;
+}
+
+message UpdateDiscussRequest {
+    UpdateDiscussInput discuss = 1;
+    message UpdateDiscussInput {
         int32 id = 1;
         string content = 2;
         string time = 3;
@@ -543,13 +598,13 @@ message GetAllCommentsResponse {
     }
 }
 
-message UpdateCommentRequest {
-    Comment comment = 1;
+message GetOneDiscussRequest {
+    int32 id = 1;
 }
 
 service CommentPropertiesService {
     rpc GetAllCommentProperties(PlaceholderRequest) returns (CommentPropertiesResponse) { }
-    rpc UpdateCommentProperties(UpdateCommentPropertiesRequest) return (StringDataResponse) { }
+    rpc UpdateCommentProperties(UpdateCommentPropertiesRequest) returns (StringDataResponse) { }
 }
 
 message CommentPropertiesResponse {
@@ -580,17 +635,16 @@ service MessageBoardService {
 
 message CreateMessageBoardRequest {
     CreateBoardInput board = 1;
-}
-
-message CreateBoardInput {
-    string name = 1;
-    string alias = 2;
-    repeated BoardItemInput boardItem = 3;
-    message BoardItemInput {
+    message CreateBoardInput {
         string name = 1;
         string alias = 2;
-        bool required = 3;
-        int32 itemId = 4;
+        repeated BoardItemInput boardItem = 3;
+        message BoardItemInput {
+            string name = 1;
+            string alias = 2;
+            bool required = 3;
+            int32 itemId = 4;
+        }
     }
 }
 
@@ -616,11 +670,13 @@ message GetAllMessageBoardResponse {
     int32 code = 1;
     string message = 2;
     repeated AllBoard data = 3;
+    int32 total = 4;
     message AllBoard {
-        string name = 1;
-        string alias = 2;
-        string time = 3;
-        int32 amount = 4;
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+        string time = 4;
+        int32 amount = 5;
     }
 }
 
@@ -682,9 +738,16 @@ service BoardItemService {
 } 
 
 message UpdateBoardItemRequest {
+    UpdateBoardItemInput board = 1;
+    message UpdateBoardItemInput {
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+        int32 item = 4;
+        bool required = 5;
+    }
+}
+
+message DeleteBoardItemRequest {
     int32 id = 1;
-    string name = 2;
-    string alias = 3;
-    int32 item = 4;
-    bool required = 5;
 }

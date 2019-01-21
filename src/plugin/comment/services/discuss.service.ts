@@ -2,7 +2,7 @@ import { Injectable, Inject } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Discuss } from "../entities/discuss.entity";
 import { Repository } from "typeorm";
-import { notadd_module_user } from "src/grpc/generated";
+import { nt_module_user } from "src/grpc/generated";
 import { NotaddGrpcClientFactory } from "src/grpc.client-factory";
 import * as moment from 'moment';
 import { Article } from "src/articles/entities/article.entity";
@@ -14,7 +14,7 @@ import { CreateDiscuss } from "../interfaces/discuss.interface";
 export class DiscussService {
 
     onModuleInit() {
-        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<notadd_module_user.UserService>('UserService');
+        this.userService = this.notaddGrpcClientFactory.userModuleClient.getService<nt_module_user.UserService>('UserService');
     }
 
     constructor(
@@ -23,7 +23,7 @@ export class DiscussService {
         @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
     ) { }
 
-    private userService: notadd_module_user.UserService;
+    private userService: nt_module_user.UserService;
 
     /**
      * 发表评论
@@ -62,11 +62,11 @@ export class DiscussService {
      * @param id 评论id
      */
     async deleteDiscuss(id: number) {
-        const exist = await this.commentRepo.findOne(id);
+        const exist = await this.discussRepo.findOne(id);
         if (!exist) {
             throw new RpcException({ code: 404, message: '该评论不存在!' });
         }
-        await this.commentRepo.remove(exist);
+        await this.discussRepo.remove(exist);
     }
 
     /**
@@ -76,11 +76,11 @@ export class DiscussService {
      * @param op 0:待审核,1:通过,2:拒绝
      */
     async auditDiscuss(id: number, op: number) {
-        const exist = await this.commentRepo.findOne(id);
+        const exist = await this.discussRepo.findOne(id);
         if (!exist) {
             throw new RpcException({ code: 404, message: '该评论不存在!' });
         }
-        await this.commentRepo.update(exist, { status: op });
+        await this.discussRepo.update(exist, { status: op });
     }
 
     /**
@@ -96,7 +96,7 @@ export class DiscussService {
      * @param endTime 截止时间
      */
     async getAllDiscusss(pageNumber: number, pageSize: number, content: string, artTitle: string, artId: number, username: string, startTime: string, endTime: string) {
-        const sqb = this.commentRepo.createQueryBuilder('comment');
+        const sqb = this.discussRepo.createQueryBuilder('comment');
         if (content) {
             sqb.andWhere('comment.content Like :content', { content: `%${content}%` });
         }
@@ -132,10 +132,14 @@ export class DiscussService {
 
     async updateDiscuss(comment: Discuss) {
         try {
-            this.commentRepo.update(comment.id, this.commentRepo.create(comment));
+            this.discussRepo.update(comment.id, this.discussRepo.create(comment));
         } catch (error) {
             throw new RpcException(error);
         }
+    }
+
+    async getOneDiscuss(id:number){
+        return await this.discussRepo.findOne(id);
     }
 
 }
