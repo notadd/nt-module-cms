@@ -13,6 +13,7 @@ import { ArtInfo } from "../entities/art-info.entity";
 import { Item } from "../entities/item.entity";
 import { nt_module_user } from "src/grpc/generated";
 import * as moment from 'moment';
+import { ClassifyService } from "./classify.service";
 const _ = require('underscore');
 
 
@@ -29,7 +30,8 @@ export class ArticleService {
         @InjectRepository(Message) private readonly mesRepo: Repository<Message>,
         @InjectRepository(ArtInfo) private readonly aiRepo: Repository<ArtInfo>,
         @InjectRepository(Item) private readonly itemRepo: Repository<Item>,
-        @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory
+        @Inject(NotaddGrpcClientFactory) private readonly notaddGrpcClientFactory: NotaddGrpcClientFactory,
+        @Inject(ClassifyService) private readonly classifyService: ClassifyService,
     ) { }
 
     private userService: nt_module_user.UserService;
@@ -66,8 +68,9 @@ export class ArticleService {
         if (infoKVs.length) {
             if (action === 'create') {
                 infoKVs.forEach(async infoKV => {
-                    await this.aiRepo.save(this.aiRepo.create({ value: infoKV.artInfoValue, article: art, item: { id: infoKV.artInfoId } }));
+                    await this.aiRepo.save(this.aiRepo.create({ value: infoKV.artInfoValue, article: art, item: { id: infoKV.infoItemId } }));
                 });
+                return;
             }
             infoKVs.forEach(async infoKV => {
                 if (infoKV.artInfoId) {
@@ -177,7 +180,6 @@ export class ArticleService {
             articles.push(key.id);
         })
         const noExist = _.difference(ids, articles);
-        console.log(ids, op);
         if (noExist.length > 0) {
             throw new RpcException({ code: 404, message: `id为${noExist}的文章不存在` });
         }
@@ -206,7 +208,7 @@ export class ArticleService {
      * @param createdAt 开始时间
      * @param endTime 截止时间
      * @param title 文章标题
-     * @param username 文章作者账户名
+     * @param username 文章作者用户名
      * @param top 是否置顶
      * @param pageNumber 页数
      * @param pageSize 每页显示数量
@@ -214,9 +216,9 @@ export class ArticleService {
     async getAllArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, top: boolean, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article')
             .where('article.status = :status', { status: 1 })
-            .leftJoinAndSelect('article.classify','classify')
-            .leftJoinAndSelect('article.artInfos','artInfos')
-            .leftJoinAndSelect('article.discuss','discuss');
+            .leftJoinAndSelect('article.classify', 'classify')
+            .leftJoinAndSelect('article.artInfos', 'artInfos')
+            .leftJoinAndSelect('article.discuss', 'discuss');
         if (classifyId) {
             sqb.andWhere('article.classify = :classifyId', { classifyId });
         }
@@ -239,7 +241,7 @@ export class ArticleService {
         if (top) {
             sqb.andWhere('article.top = :top', { top });
         }
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({'article.modifyAt':'DESC'}).getManyAndCount();
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.modifyAt': 'DESC' }).getManyAndCount();
         const exist: artResult[] = [];
         for (const i of result[0]) {
             const data = await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
@@ -268,11 +270,39 @@ export class ArticleService {
         return { exist, total: result[1] };
     }
 
+    async userGetArticles(classifyId: number, pageNumber: number, pageSize: number) {
+        const ids = await this.classifyService.getAllClassifyIds(classifyId);
+        const sqb = this.artRepo.createQueryBuilder('article')
+        .where('article.status = :status', { status: 1 })
+        .andWhere('article.recycling = false')
+        .andWhere('article.classify IN(:...ids)', {ids})
+        .leftJoinAndSelect('article.classify', 'classify')
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.createdAt': 'DESC' }).getManyAndCount();
+        const exist = [];
+        for (const i of result[0]) {
+            const classify = await this.claRepo.findOne(i.classify);
+            const a = {
+                id: i.id,
+                title: i.title,
+                classify,
+                cover: i.cover,
+                abstract: i.abstract,
+                content: i.content,
+                createAt: i.createdAt,
+                createdAt: i.createdAt,
+                keywords: i.keywords,
+                like: i.like
+            }
+            exist.push(a);
+        }
+        return { total: result[1], exist };
+    }
+
     /**
      * 搜索回收站中文章
      * 
      */
-    async getRecycleArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
+    async getRecycleArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, top: boolean, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article').where('article.recycling = :recycling', { recycling: true });
         if (classifyId) {
             sqb.andWhere('article.classify = :classifyId', { classifyId });
@@ -326,17 +356,21 @@ export class ArticleService {
      * @param id 文章id
      */
     async getArticleById(id: number) {
-        const artQb = this.artRepo.createQueryBuilder('art')
+        const artQb = await this.artRepo.createQueryBuilder('art')
             .leftJoinAndSelect('art.artInfos', 'artInfos')
-            .leftJoinAndSelect('artInfos.Item', 'item');
+            .leftJoinAndSelect('artInfos.item', 'item')
+            .leftJoinAndSelect('art.discuss', 'discuss')
+            .leftJoinAndSelect('art.classify', 'classify');
 
         const itemQb = await this.itemRepo.createQueryBuilder('item')
-            .leftJoinAndSelect('item.classifyItem', 'classifyItem')
+            .leftJoinAndSelect('item.itemClassifys', 'classifyItem')
             .leftJoinAndSelect('classifyItem.classify', 'classify')
             .leftJoinAndSelect('classify.articles', 'articles');
 
         const art = await artQb.where('art.id = :id', { id }).getOne();
-        const item = await itemQb.where('articles.id = :id', { id }).orderBy('item.order', 'ASC').getMany();
+        const item = await itemQb.where('articles.id = :id', { id }).getMany();
+        console.log(art);
+        // .orderBy('item.order', 'ASC')
         return this.refactorArticle(art, item);
     }
 
@@ -345,7 +379,7 @@ export class ArticleService {
             id: art.id,
             title: art.title,
             source: art.source,
-            classifyId: art.classify,
+            classify: art.classify,
             sourceUrl: art.sourceUrl,
             top: art.top,
             views: art.views,
@@ -356,7 +390,17 @@ export class ArticleService {
             refuseReason: art.refuseReason,
             recycling: art.recycling,
             createdAt: art.createdAt,
+            modifyAt: art.modifyAt,
             userId: art.userId,
+            discuss: art.discuss.length ? art.discuss.map(item => {
+                return {
+                    id: item.id,
+                    content: item.content,
+                    time: item.time,
+                    status: item.status,
+                    userId: item.userId
+                }
+            }) : [],
             artInfos: items.length ? items.map(item => {
                 const artInfo = art.artInfos.find(artInfo => artInfo.item.id === item.id);
                 return {
@@ -366,6 +410,7 @@ export class ArticleService {
                 };
             }) : []
         };
+        console.log(artInfoData);
         return artInfoData;
     }
 
@@ -374,7 +419,7 @@ export class ArticleService {
      * 搜索获取待审核文章
      * 
      */
-    async getCheckArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, pageNumber: number, pageSize: number) {
+    async getCheckArticle(classifyId: number, createdAt: string, endTime: string, title: string, username: string, top: boolean, pageNumber: number, pageSize: number) {
         const sqb = this.artRepo.createQueryBuilder('article')
             .where('article.recycling = :recycling', { recycling: false })
             .andWhere('article.status = :status', { status: 0 });

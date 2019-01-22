@@ -202,6 +202,7 @@ service ArticleService {
     rpc GetRecycleArticle(GetRecycleArticleRequest) returns (AllArticleResponse) { }
     rpc GetArticleById(GetArticleByIdRequest) returns (ArticleResponse) { }
     rpc GetCheckArticle(GetCheckArticleRequest) returns (AllArticleResponse) { }
+    rpc UserGetArticles(UserGetArticleRequest) returns (AllArticleResponse) { }
 }
 
 message CreateArticleRequest {
@@ -222,7 +223,7 @@ message CreateArticleRequest {
 }
 
 message CreateInfoKV {
-    int32 artInfoId = 1;
+    int32 infoItemId = 1;
     string artInfoValue = 2;
 }
 
@@ -266,12 +267,21 @@ message AuditArticleRequest {
     string refuseReason = 3;
 }
 
+message UserGetArticleRequest {
+    int32 classifyId = 1;
+    int32 pageNumber = 2;
+    int32 pageSize = 3;
+}
+
 message GetAllArticleRequest {
     int32 classifyId = 1;
     string createdAt = 2;
     string title = 3;
     int32 pageNumber = 4;
     int32 pageSize = 5;
+    string endTime = 6;
+    string username = 7;
+    bool top = 8;
 }
 
 message AllArticleResponse {
@@ -300,6 +310,8 @@ message ArtData {
     string username = 16;
     repeated ArtInfos artInfos = 17;
     string modifyAt = 18;
+    string keywords = 19;
+    int32 like = 20;
 }
 
 message ArtInfos {

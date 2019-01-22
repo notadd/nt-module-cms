@@ -9,7 +9,10 @@ export interface inputArticle {
     source: string;
     sourceUrl: string;
     createAt: string;
-    infoKVs?: { key: number; value: string }[];
+    infoKVs?: {
+        artInfoId: number;
+        artInfoValue: string;
+        infoItemId?: number }[];
 }
 
 export interface updateArticle {
@@ -25,16 +28,22 @@ export interface updateArticle {
     modifyAt?:string;
     status?: number;
     infoKVs?: {
-        key: number;
-        value: string;
-        relationId?: number
+        artInfoId: number;
+        artInfoValue: string;
+        infoItemId?: number
     }[];
+    userId: number;
 }
 
 export  interface artResult {
     id: number;
     title: string;
-    classifyName: string;
+    classify: {
+        id: number;
+        name: string;
+        alias: string;
+        onlyChildrenArt: boolean;
+    }
     sourceUrl: string;
     cover: string;
     abstract: string;
@@ -42,5 +51,5 @@ export  interface artResult {
     top: boolean;
     source: string;
     userId: number;
-    userName: string;
+    username: string;
 }
