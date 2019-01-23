@@ -11,14 +11,14 @@ export class ItemController {
     ) { }
 
     @GrpcMethod('ItemService')
-    async createItem(body: { item: inputItem }) {
-        await this.itemService.createItem(body.item);
+    async createItem(body: { createItemInput: inputItem }) {
+        await this.itemService.createItem(body.createItemInput);
         return { code: 200, message: '新建信息项成功!' };
     }
 
     @GrpcMethod('ItemService')
-    async updateItem(body: { item: Item }) {
-        await this.itemService.updateItem(body.item);
+    async updateItem(body: { updateItemInput: Item }) {
+        await this.itemService.updateItem(body.updateItemInput);
         return { code: 200, message: '修改成功!' };
     }
 
