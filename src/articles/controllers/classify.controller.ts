@@ -31,13 +31,13 @@ export class ClassifyController {
     @GrpcMethod('ClassifyService')
     async getAllClassify(body: { id: number }) {
         const data = await this.classifyService.getAllClassify(body.id);
-        return { code: 200, message: '查询成功!', data };
+        return { code: 200, message: '查询成功!', data: JSON.stringify(data) };
     }
 
     @GrpcMethod('ClassifyService')
     async getOneClassify(body: { id: number }) {
         const data = await this.classifyService.getOneClassify(body.id);
-        return { code: 200, message: '查询成功!', data };
+        return { code: 200, message: '查询成功!', data: JSON.stringify(data) };
     }
 
     @GrpcMethod('ClassifyService')
