@@ -76,8 +76,7 @@ export class PageSortService {
     }
 
     async getAllPageSort() {
-        const result = await this.psRepo.findTrees();
-        return { code: 200, message: '查询成功!', data: result };
+        return await this.psRepo.findTrees();
     }
 
     async getOnePageSort(id:number) {

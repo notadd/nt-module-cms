@@ -31,7 +31,7 @@ export class PageSortController {
     @GrpcMethod('PageSortService')
     async getAllPageSort() {
         const data = await this.psService.getAllPageSort();
-        return { code: 200, message: '查询成功!', data };
+        return { code: 200, message: '查询成功!', data: JSON.stringify(data)};
     }
 
     @GrpcMethod('PageSortService')
