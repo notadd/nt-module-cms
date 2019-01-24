@@ -23,6 +23,17 @@ export class Article {
     })
     title: string;
 
+    /*关键词*/
+    @Column({
+        nullable: true
+    })
+    keywords: string;
+
+    @Column({
+        default:0
+    })
+    like: number;
+
     /* 访问量*/
     @Column({
         default: 0

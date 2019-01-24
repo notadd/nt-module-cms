@@ -263,7 +263,8 @@ export class ArticleService {
                 recycling: i.recycling,
                 createdAt: i.createdAt,
                 artInfos: i.artInfos,
-                discuss: i.discuss
+                discuss: i.discuss,
+                keywords: i.keywords
             }
             exist.push(a);
         }
@@ -271,12 +272,22 @@ export class ArticleService {
     }
 
     async userGetArticles(classifyId: number, pageNumber: number, pageSize: number) {
-        const ids = await this.classifyService.getAllClassifyIds(classifyId);
+        const cla = await this.claRepo.findOne(classifyId, { relations: ['parent'] });
+        const ids: number[] = [];
+        if (cla.alias === 'all') {
+            const a = await this.classifyService.getAllClassifyIds(cla.parent.id);
+            for (const i of a) {
+                ids.push(i);
+            }
+        }
+        if (cla.alias !== 'all') {
+            ids.push(classifyId);
+        }
         const sqb = this.artRepo.createQueryBuilder('article')
-        .where('article.status = :status', { status: 1 })
-        .andWhere('article.recycling = false')
-        .andWhere('article.classify IN(:...ids)', {ids})
-        .leftJoinAndSelect('article.classify', 'classify')
+            .where('article.status = :status', { status: 1 })
+            .andWhere('article.recycling = false')
+            .andWhere('article.classify IN(:...ids)', { ids })
+            .leftJoinAndSelect('article.classify', 'classify')
         const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.createdAt': 'DESC' }).getManyAndCount();
         const exist = [];
         for (const i of result[0]) {
@@ -370,6 +381,8 @@ export class ArticleService {
         const art = await artQb.where('art.id = :id', { id }).getOne();
         const item = await itemQb.where('articles.id = :id', { id }).getMany();
         console.log(art);
+        art.views++;
+        await this.artRepo.save(this.artRepo.create(art));
         // .orderBy('item.order', 'ASC')
         return this.refactorArticle(art, item);
     }
@@ -392,6 +405,8 @@ export class ArticleService {
             createdAt: art.createdAt,
             modifyAt: art.modifyAt,
             userId: art.userId,
+            keywords: art.keywords,
+            like: art.like,
             discuss: art.discuss.length ? art.discuss.map(item => {
                 return {
                     id: item.id,
@@ -462,6 +477,8 @@ export class ArticleService {
                 status: i.status,
                 recycling: i.recycling,
                 createdAt: i.createdAt,
+                keywords: i.keywords,
+                like: i.like
             }
             exist.push(a);
         }
