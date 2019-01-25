@@ -281,14 +281,26 @@ export class ArticleService {
             }
         }
         if (cla.alias !== 'all') {
-            ids.push(classifyId);
+            if (!cla.onlyChildrenArt) {
+                const a = await this.classifyService.getAllClassifyIds(classifyId);
+                for (const i of a) {
+                    ids.push(i);
+                }
+            }
+            if(cla.onlyChildrenArt){
+                const a = await this.classifyService.getAllClassifyIds(classifyId);
+                const b = a.splice(a.indexOf(classifyId),1);
+                for (const i of b) {
+                    ids.push(i);
+                }
+            }
         }
         const sqb = this.artRepo.createQueryBuilder('article')
             .where('article.status = :status', { status: 1 })
             .andWhere('article.recycling = false')
             .andWhere('article.classify IN(:...ids)', { ids })
             .leftJoinAndSelect('article.classify', 'classify')
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.createdAt': 'DESC' }).getManyAndCount();
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.modifyAt': 'DESC' }).getManyAndCount();
         const exist = [];
         for (const i of result[0]) {
             const classify = await this.claRepo.findOne(i.classify);
@@ -332,7 +344,7 @@ export class ArticleService {
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).getMany();
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.modifyAt': 'DESC' }).getMany();
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
@@ -380,14 +392,14 @@ export class ArticleService {
 
         const art = await artQb.where('art.id = :id', { id }).getOne();
         const item = await itemQb.where('articles.id = :id', { id }).getMany();
-        console.log(art);
         art.views++;
         await this.artRepo.save(this.artRepo.create(art));
         // .orderBy('item.order', 'ASC')
-        return this.refactorArticle(art, item);
+        const username = (await this.userService.findUserInfoByIds({ userIds: [art.userId] }).toPromise()).data[0].username;
+        return this.refactorArticle(art, item, username);
     }
 
-    private refactorArticle(art: Article, items: Item[]) {
+    private refactorArticle(art: Article, items: Item[], username: string) {
         const artInfoData = {
             id: art.id,
             title: art.title,
@@ -405,6 +417,7 @@ export class ArticleService {
             createdAt: art.createdAt,
             modifyAt: art.modifyAt,
             userId: art.userId,
+            username,
             keywords: art.keywords,
             like: art.like,
             discuss: art.discuss.length ? art.discuss.map(item => {
@@ -425,7 +438,6 @@ export class ArticleService {
                 };
             }) : []
         };
-        console.log(artInfoData);
         return artInfoData;
     }
 
