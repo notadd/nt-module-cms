@@ -113,7 +113,6 @@ export class DiscussService {
         }
         if (username) {
             const user = await this.userService.findOneWithRolesAndPermissions({ username }).toPromise();
-            console.log(user);
             if (!user.data) {
                 return { data: null, total: 0 };
             }

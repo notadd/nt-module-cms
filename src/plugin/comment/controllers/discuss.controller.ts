@@ -11,8 +11,8 @@ export class DiscussController {
     ) { }
 
     @GrpcMethod('DiscussService')
-    async createDiscuss(body: { comment: CreateDiscuss }) {
-        await this.discussService.createDiscuss(body.comment);
+    async createDiscuss(body: { discuss: CreateDiscuss }) {
+        await this.discussService.createDiscuss(body.discuss);
         return { code: 200, message: '评论成功!' };
     }
 
@@ -38,6 +38,12 @@ export class DiscussController {
     async updateDiscuss(body: { discuss: Discuss }) {
         await this.discussService.updateDiscuss(body.discuss);
         return { code: 200, message: '修改成功!' };
+    }
+
+    @GrpcMethod('DiscussService')
+    async getOneDiscuss(body: { id: number }) {
+        const data = await this.discussService.getOneDiscuss(body.id);
+        return { code: 200, message: '查询成功!', data };
     }
 
 }
