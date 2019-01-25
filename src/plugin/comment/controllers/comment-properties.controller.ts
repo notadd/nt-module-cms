@@ -8,13 +8,13 @@ export class CommentPropertiesController {
         @Inject(CommentPropertiesService) private readonly cpService: CommentPropertiesService,
     ) { }
 
-    @GrpcMethod('')
+    @GrpcMethod('CommentPropertiesService')
     async getAllCommentProperties() {
         const data = await this.cpService.getAllCommentProperties();
         return { code: 200, message: '查询成功!', data };
     }
 
-    @GrpcMethod('')
+    @GrpcMethod('CommentPropertiesService')
     async updateCommentProperties(body: { id: number, name: string }) {
         await this.cpService.updateCommentProperties(body.id, body.name);
         return { code: 200, message: '修改成功!' };
