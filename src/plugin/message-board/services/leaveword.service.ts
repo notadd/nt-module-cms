@@ -38,21 +38,20 @@ export class LeavewordService {
         if (!messageBoard) {
             throw new RpcException({ code: 404, message: '该留言板不存在!' });
         }
-        const leaveword = await this.leavewordRepo.save(this.leavewordRepo.create(createLeaveword));
-        await this.leavewordRepo.createQueryBuilder('leaveword').relation(Leaveword, 'messageBoard').of(leaveword).add(createLeaveword.messageBoardId);
+        const leaveword = await this.leavewordRepo.save(this.leavewordRepo.create({ userId: createLeaveword.userId, messageBoard }));
         if (createLeaveword.infoKVs && createLeaveword.infoKVs.length) {
             for (let i = 0; i < createLeaveword.infoKVs.length; i++) {
-                await this.lwInfoRepo.save(this.lwInfoRepo.create({ value: createLeaveword.infoKVs[i].value, leaveword, item: { id: createLeaveword.infoKVs[i].key } }));
+                await this.lwInfoRepo.save(this.lwInfoRepo.create({ value: createLeaveword.infoKVs[i].artInfoValue, leaveword, item: { id: createLeaveword.infoKVs[i].infoItemId } }));
             }
         }
     }
 
     async deleteLeaveword(id: number) {
-        const leaveword = await this.leavewordRepo.findOne(id,{relations:['messageBoard']});
-        if(!leaveword){
-            throw new RpcException({code:404,message:'该留言不存在!'});
+        const leaveword = await this.leavewordRepo.findOne(id, { relations: ['messageBoard'] });
+        if (!leaveword) {
+            throw new RpcException({ code: 404, message: '该留言不存在!' });
         }
-        await this.leavewordRepo.createQueryBuilder('leaveword').relation(Leaveword,'messageBoard').of(leaveword).remove(leaveword.messageBoard);
+        await this.leavewordRepo.createQueryBuilder('leaveword').relation(Leaveword, 'messageBoard').of(leaveword).remove(leaveword.messageBoard);
         await this.leavewordRepo.remove(leaveword);
     }
 

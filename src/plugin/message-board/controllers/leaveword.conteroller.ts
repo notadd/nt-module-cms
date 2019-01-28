@@ -10,8 +10,8 @@ export class LeavewordController {
     ) { }
 
     @GrpcMethod('LeavewordService')
-    async createLeaveword(body: { leaveword: CreateLeavewordInput }) {
-        await this.leavewordService.createLeaveword(body.leaveword);
+    async createLeaveword(body: { createLeaveword: CreateLeavewordInput }) {
+        await this.leavewordService.createLeaveword(body.createLeaveword);
         return { code: 200, message: '留言成功!' };
     }
 

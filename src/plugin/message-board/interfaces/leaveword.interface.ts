@@ -2,7 +2,7 @@ export interface CreateLeavewordInput {
     userId: number;
     messageBoardId: number;
     infoKVs: {
-        key: number;
-        value: string
+        infoItemId: number;
+        artInfoValue: string
     }[]
 }
