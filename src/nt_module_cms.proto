@@ -28,6 +28,7 @@ message CreateClassifyRequest {
         UpdateClassify parent = 3;
         bool onlyChildrenArt = 4;
         repeated ClassifyItemInput classifyItem = 5;
+        int32 order = 6;
     }
 }
 
@@ -60,6 +61,7 @@ message UpdateClassifyRequest {
         string alias = 3;
         bool onlyChildrenArt = 4;
         UpdateClassify parent = 5;
+        int32 order = 6;
     }
 }
 
@@ -83,7 +85,8 @@ message ClassifyData {
     int32 id = 1;
     string name = 2;
     string alias = 3;
-    bool onlyChildrenArt = 4;
+    int32 order = 4;
+    bool onlyChildrenArt = 5;
 }
 
 message InfoItemData {
@@ -218,6 +221,7 @@ message CreateArticleRequest {
         string source = 8;
         string sourceUrl = 9;
         repeated CreateInfoKV infoKVs = 10;
+        string keywords = 11;
     }
     
 }
@@ -240,6 +244,7 @@ message UpdateArticleRequest {
         bool top = 8;
         string source = 9;
         repeated UpdateInfoKV infoKVs = 10;
+        string keywords = 11;
     }
 }
 
@@ -312,6 +317,7 @@ message ArtData {
     string modifyAt = 18;
     string keywords = 19;
     int32 like = 20;
+    repeated Discuss discuss = 21;
 }
 
 message ArtInfos {
@@ -335,7 +341,7 @@ message GetArticleByIdRequest {
 message ArticleResponse {
     int32 code = 1;
     string message = 2;
-    ArtData article = 3;
+    ArtData data = 3;
 }
 
 message GetCheckArticleRequest {
@@ -350,6 +356,10 @@ service ItemService {
     rpc CreateItem(CreateItemRequest) returns (StringDataResponse) { }
     rpc UpdateItem(UpdateItemRequest) returns (StringDataResponse) { }
     rpc DeleteItem(DeleteItemRequest) returns (StringDataResponse) { }
+}
+
+message DeleteBoardItemRequest {
+    int32 id = 1;
 }
 
 message CreateItemRequest {
@@ -479,7 +489,7 @@ service PageService {
     rpc UpdatePage(UpdatePageRequest) returns (StringDataResponse) { }
     rpc DeletePage(DeletePageRequest) returns (StringDataResponse) { }
     rpc GetAllPage(GetAllPageRequest) returns (GetAllPageResponse) { }
-    rpc GetOnePage(DeletePageRequest) returns (GetOnePageResponse) { }
+    rpc GetOnePage(GetOnePageRequest) returns (GetOnePageResponse) { }
 }
 
 message CreatePageRequest {
@@ -488,14 +498,19 @@ message CreatePageRequest {
         string name = 1;
         string alias = 2;
         int32 pageSortId = 3;
-        repeated ContentInput content = 4;
+        repeated ContentInput contents = 4;
     }
 }
 
 message ContentInput {
-    string name = 1;
-    string alias = 2;
-    string value = 3;
+        string name = 1;
+        string alias = 2;
+        string value = 3;
+        int32 id = 4;
+}
+
+message GetOnePageRequest {
+    string alias = 1;
 }
 
 message UpdatePageRequest {
@@ -535,7 +550,7 @@ message OnePage {
     string name = 1;
     string alias = 2;
     int32 pageSortId = 3;
-    repeated ContentInput content = 4;
+    repeated ContentInput contents = 4;
 }
 
 service DiscussService {
@@ -646,7 +661,7 @@ service MessageBoardService {
 }
 
 message CreateMessageBoardRequest {
-    CreateBoardInput board = 1;
+    CreateBoardInput messageBoard = 1;
     message CreateBoardInput {
         string name = 1;
         string alias = 2;
@@ -661,7 +676,7 @@ message CreateMessageBoardRequest {
 }
 
 message UpdateMessageBoardRequest {
-    UpdateBoardInput board = 1;
+    UpdateBoardInput messageBoard = 1;
     message UpdateBoardInput {
         int32 id = 1;
         string name = 2;
@@ -704,7 +719,23 @@ message GetOneMessageBoardResponse {
         int32 id = 1;
         string name = 2;
         string alias = 3;
-        repeated InfoItemData item = 4;
+        repeated BoardItemData boardItems = 4;
+        string time = 5;
+    }
+    message BoardItemData {
+        int32 id = 1;
+        string name = 2;
+        string alias = 3;
+        bool required = 4;
+        ItemData item = 5;
+    }
+    message ItemData{
+        int32 id = 1;
+        string name = 2;
+        string style = 3;
+        string explain = 4;
+        string regular = 5;
+        string info = 6;
     }
 }
 
@@ -732,7 +763,7 @@ service LeavewordService {
 }
 
 message CreateLeavewordRequest {
-    CreateLeavewordInput createLeavewordInput = 1;
+    CreateLeavewordInput createLeaveword = 1;
     message CreateLeavewordInput {
         int32 userId = 1;
         int32 messageBoardId = 2;
@@ -760,6 +791,46 @@ message UpdateBoardItemRequest {
     }
 }
 
-message DeleteBoardItemRequest {
-    int32 id = 1;
+service UpYunService {
+    rpc Bucket(BucketRequest) returns (StringDataResponse) { }
+    rpc UploadProcess(UploadProcessRequest) returns (UploadProcessResponse) { }
+}
+
+message BucketRequest {
+    BucketInput bucket = 1;
+    message BucketInput {
+        bool isPublic = 1;
+        string name = 2;
+        string operator = 3;
+        string password = 4;
+        string directory = 5;
+        string baseUrl = 6;
+        int32 requestExpire = 7;
+        int32 tokenExpire = 8;
+        string tokenSecretKey = 9;
+    }
+}
+
+message UploadProcessRequest {
+    UploadProcessInput upload = 1;
+    message UploadProcessInput {
+        string bucketName = 1;
+        string md5 = 2;
+        string contentName = 3;
+        string contentSecret = 4;
+        repeated string tags = 5;
+    }
+}
+
+message UploadProcessResponse {
+    int32 code = 1;
+    string message = 2;
+    string url = 3;
+    string method = 4;
+    string baseUrl = 5;
+    UploadProcessForm uploadProcessForm = 6;
+    message UploadProcessForm {
+        string policy = 1;
+        string authorization =2;
+    }
 }
