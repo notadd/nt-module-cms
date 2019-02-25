@@ -36,8 +36,8 @@ export class PageController {
     }
 
     @GrpcMethod('PageService')
-    async getOnePage(body: { id: number }) {
-        const data = await this.pageService.getOnePage(body.id);
+    async getOnePage(body: { alias: string }) {
+        const data = await this.pageService.getOnePage(body.alias);
         return { code: 200, message: '查询成功!', data };
     }
 

@@ -21,24 +21,28 @@ export class PageService {
         if (!ps) {
             throw new RpcException({ code: 404, message: '该页面分类不存在!' });
         }
-        const exist = await this.pageRepo.findOne({ where: { alias: page.alias, pageSort: page.pageSortId } });
+        const exist = await this.pageRepo.findOne({ where: { alias: page.alias } });
         if (exist) {
             throw new RpcException({ code: 406, message: '别名重复!' });
         }
         const time = moment().format('YYYY-MM-DD HH:mm:ss');
-        const result = await this.pageRepo.save(this.pageRepo.create({
-            name: page.name,
-            alias: page.alias,
-            lastUpdateTime: time,
-            pageSort: ps
-        }));
-        for (const i of page.contents) {
-            await this.contentRepo.save(this.contentRepo.create({
-                name: i.name,
-                alias: i.alias,
-                value: i.value,
-                page: result
+        try {
+            const result = await this.pageRepo.save(this.pageRepo.create({
+                name: page.name,
+                alias: page.alias,
+                lastUpdateTime: time,
+                pageSort: ps
             }));
+            for (const i of page.contents) {
+                await this.contentRepo.save(this.contentRepo.create({
+                    name: i.name,
+                    alias: i.alias,
+                    value: i.value,
+                    page: result
+                }));
+            }
+        } catch (error) {
+            throw new RpcException({ code: 400, message: error.toString() });
         }
     }
 
@@ -79,8 +83,24 @@ export class PageService {
         return { data: result[0], total: result[1] };
     }
 
-    async getOnePage(id: number) {
-        return await this.pageRepo.findOne(id, { relations: ['contents'] });
+    async getOnePage(alias: string) {
+        const result = await this.pageRepo.findOne({ where: { alias }, relations: ['contents', 'pageSort'] });
+        const a = {
+            id: result.id,
+            name: result.name,
+            alias: result.alias,
+            lastUpdateTime: result.lastUpdateTime,
+            contents: result.contents.length ? result.contents.map(item => {
+                return {
+                    id: item.id,
+                    name: item.name,
+                    alias: item.alias,
+                    value: item.value
+                }
+            }) : [],
+            pageSortId: result.pageSort.id
+        };
+        return a;
     }
 
 }
