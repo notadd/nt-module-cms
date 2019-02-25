@@ -241,7 +241,7 @@ export class ArticleService {
         if (top) {
             sqb.andWhere('article.top = :top', { top });
         }
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.modifyAt': 'DESC' }).getManyAndCount();
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.top':'DESC','article.modifyAt': 'DESC' }).getManyAndCount();
         const exist: artResult[] = [];
         for (const i of result[0]) {
             const data = await this.userService.findUserInfoByIds({ userIds: [i.userId] }).toPromise();
@@ -262,10 +262,11 @@ export class ArticleService {
                 status: i.status,
                 recycling: i.recycling,
                 createdAt: i.createdAt,
+                modifyAt: i.modifyAt,
                 artInfos: i.artInfos,
                 discuss: i.discuss,
                 keywords: i.keywords
-            }
+            };
             exist.push(a);
         }
         return { exist, total: result[1] };
@@ -300,7 +301,7 @@ export class ArticleService {
             .andWhere('article.recycling = false')
             .andWhere('article.classify IN(:...ids)', { ids })
             .leftJoinAndSelect('article.classify', 'classify')
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.modifyAt': 'DESC' }).getManyAndCount();
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.top':'DESC', 'article.modifyAt': 'DESC' }).getManyAndCount();
         const exist = [];
         for (const i of result[0]) {
             const classify = await this.claRepo.findOne(i.classify);
@@ -314,7 +315,9 @@ export class ArticleService {
                 createAt: i.createdAt,
                 createdAt: i.createdAt,
                 keywords: i.keywords,
-                like: i.like
+                like: i.like,
+                sourceUrl: i.sourceUrl,
+                source: i.source
             }
             exist.push(a);
         }
@@ -344,7 +347,7 @@ export class ArticleService {
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.modifyAt': 'DESC' }).getMany();
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({ 'article.top':'DESC', 'article.modifyAt': 'DESC' }).getMany();
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {
@@ -467,7 +470,7 @@ export class ArticleService {
             sqb.andWhere('article.createdAt > :start', { start: min });
             sqb.andWhere('article.createdAt < :end', { end: max })
         }
-        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).getMany();
+        const result = await sqb.skip(pageSize * (pageNumber - 1)).take(pageSize).orderBy({'article.modifyAt': 'ASC' }).getMany();
         const exist: artResult[] = [];
         const total = await sqb.getCount();
         for (const i of result) {

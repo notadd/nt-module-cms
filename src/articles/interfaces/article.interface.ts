@@ -43,7 +43,7 @@ export  interface artResult {
         name: string;
         alias: string;
         onlyChildrenArt: boolean;
-    }
+    };
     sourceUrl: string;
     cover: string;
     abstract: string;

@@ -3,6 +3,7 @@ export interface CreateClassify {
     alias: string;
     parent: { id: number };
     onlyChildrenArt: boolean;
+    order: number;
     classifyItem?: {
         name: string;
         alias: string;

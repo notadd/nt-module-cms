@@ -11,8 +11,8 @@ export class PageSortController {
     ) { }
 
     @GrpcMethod('PageSortService')
-    async createPageSort(body: { pageSort: CreatePageSort }) {
-        await this.psService.createPageSort(body.pageSort);
+    async createPageSort(body: { createPageSortInput: CreatePageSort }) {
+        await this.psService.createPageSort(body.createPageSortInput);
         return { code: 200, message: '创建页面分类成功!' };
     }
 

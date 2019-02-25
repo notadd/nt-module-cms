@@ -70,13 +70,11 @@ export class ClassifyService {
             return { code: 404, message: '当前分类不存在' };
         }
         const array = await this.getAllClassifyIds(id);
-        console.log(array);
-        const articles = await this.artRepository.count({ where: { classifyId: In(array) } });
+        const articles = await this.artRepository.count({ where: { classify: In(array) } });
         if (articles > 0) {
             throw new RpcException({ code: 403, message: '当前分类下有文章,不能删除' })
         }
         array.splice(array.indexOf(id), 1);
-        console.log(array);
         if (array.length) {
             throw new RpcException({ code: 403, message: '当前分类下有子分类,不能删除' });
         }
@@ -140,11 +138,12 @@ export class ClassifyService {
             if (!exist) {
                 throw new RpcException({ code: 404, message: '该分类不存在!' });
             }
-            const result = await this.claRepository.findDescendantsTree(exist);
-            return { code: 200, message: '查询成功!', data: result };
+            // const result = await this.claRepository.createDescendantsQueryBuilder('classify','classify',exist).orderBy('classify.order','ASC').getMany();
+            // console.log(result);
+            // return result;
+            return await this.claRepository.findDescendantsTree(exist);
         } else {
-            const result = await this.claRepository.findTrees();
-            return { code: 200, message: '查询成功!', data: result };
+            return await this.claRepository.findTrees();
         }
     }
 
@@ -158,17 +157,17 @@ export class ClassifyService {
         if (!exist) {
             throw new RpcException({ code: 200, message: '该分类不存在!' });
         }
-        const data1 = await this.claRepository.findDescendantsTree(exist);
+        const data1 = await this.claRepository.findAncestorsTree(exist);
         const data2 = await this.claRepository.createQueryBuilder('classify').relation(Classify, 'classifyItems').of(id).loadMany();
         const data = {
             id: data1.id,
             name: data1.name,
             alias: data1.alias,
-            children: data1.children,
             parent: data1.parent,
+            onlyChildrenArt: data1.onlyChildrenArt,
             clasifyItem: data2
         };
-        return { data };
+        return  data ;
     }
 
     /**

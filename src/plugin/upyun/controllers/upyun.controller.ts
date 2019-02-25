@@ -17,8 +17,8 @@ export class UpYunController {
     }
 
     @GrpcMethod('UpYunService')
-    async uploadProcess(body: { upload: UploadProcessBody }, context) {
-        await this.upyunService.uploadProcess(body.upload, context);
+    async uploadProcess(body: { upload: UploadProcessBody, protocol: string, host: string }) {
+        return await this.upyunService.uploadProcess(body.upload, body.protocol, body.host);
     }
 
 }
