@@ -9,7 +9,9 @@
     "debug:watch": "nodemon --config nodemon-debug.json",
     "check": "tslint -p tsconfig.json -c tslint.json",
     "fix": "tslint -p tsconfig.json -c tslint.json --fix",
-    "grpc:gen": "./node_modules/.bin/rxjs-grpc -o src/grpc/generated.ts src/grpc/protobufs/*.proto"
+    "grpc:gen": "./node_modules/.bin/rxjs-grpc -o src/grpc/generated.ts src/grpc/protobufs/*.proto",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "author": "notadd",
   "license": "Apache-2.0",
@@ -26,9 +28,10 @@
     "reflect-metadata": "^0.1.12",
     "rxjs": "^6.3.3",
     "rxjs-grpc": "^1.0.0-rxjs6.0",
-    "typeorm": "^0.2.7",
+    "typeorm": "^0.2.15",
     "typescript": "^3.1.3",
-    "underscore": "^1.9.1"
+    "underscore": "^1.9.1",
+    "snyk": "^1.161.1"
   },
   "devDependencies": {
     "@types/node": "^10.12.0",
@@ -36,5 +39,6 @@
     "ts-node": "^7.0.1",
     "tsconfig-paths": "^3.6.0",
     "tslint": "^5.11.0"
-  }
+  },
+  "snyk": true
 }
