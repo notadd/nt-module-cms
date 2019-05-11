@@ -11,3 +11,6 @@ patch:
   'npm:minimatch:20160620':
     - rxjs-grpc > jscodeshift > babel-core > minimatch:
         patched: '2019-05-05T08:26:16.867Z'
+  SNYK-JS-AXIOS-174505:
+    - '@nestjs/common > axios':
+        patched: '2019-05-06T05:55:23.872Z'
