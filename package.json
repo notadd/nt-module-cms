@@ -24,7 +24,7 @@
     "@nestjs/typeorm": "5.2.2",
     "grpc": "1.17.0-pre1",
     "moment": "2.22.2",
-    "pg": "7.7.1",
+    "pg": "7.11.0",
     "reflect-metadata": "0.1.12",
     "rxjs": "6.3.3",
     "rxjs-grpc": "1.0.0-rxjs6.0",
